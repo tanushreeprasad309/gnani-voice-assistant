@@ -40,7 +40,7 @@ TRANSLATIONS = {
         "directory_header": "📋 Emergency Grid Directory (Tap Any Card to Call)",
         "helpline": "Helpline:",
         "realtime_desc": "Real-time audio stream active. Speak your emergency to stream directly.",
-        "audio_response": "🔊 **Spoken Assistant Response:**"
+        "audio_response": "🔊 **Spoken Assistant Response (Sahaya):**"
     },
     "kn_IN": {
         "title": "🚨 ಸಹಾಯ ತುರ್ತು ಸಹಾಯಕ",
@@ -57,7 +57,7 @@ TRANSLATIONS = {
         "directory_header": "📋 ತುರ್ತು ಡೈರೆಕ್ಟರಿ (ಕರೆ ಮಾಡಲು ಕಾರ್ಡ್ ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ)",
         "helpline": "ಸಹಾಯವಾಣಿ:",
         "realtime_desc": "ನೈಜ-ಸಮಯದ ಧ್ವನಿ ಪ್ರಸಾರ ಸಕ್ರಿಯವಾಗಿದೆ. ನೇರವಾಗಿ ಮಾತನಾಡಲು ನಿಮ್ಮ ತುರ್ತು ಪರಿಸ್ಥಿತಿಯನ್ನು ತಿಳಿಸಿ.",
-        "audio_response": "🔊 **ಸಹಾಯಕ ಧ್ವನಿ ಪ್ರತಿಕ್ರಿಯೆ:**"
+        "audio_response": "🔊 **ಸಹಾಯಕ (ಸಹಾಯ) ಧ್ವನಿ ಪ್ರತಿಕ್ರಿಯೆ:**"
     },
     "hi_IN": {
         "title": "🚨 सहायता आपातकालीन सहायक",
@@ -74,7 +74,7 @@ TRANSLATIONS = {
         "directory_header": "📋 आपातकालीन डायरेक्टरी (कॉल करने के लिए टैप करें)",
         "helpline": "हेल्पलाइन:",
         "realtime_desc": "रियल-टाइम ऑडियो स्ट्रीम सक्रिय है। अपनी आपात स्थिति सीधे बोलने के लिए उपयोग करें।",
-        "audio_response": "🔊 **सहायक की मौखिक प्रतिक्रिया:**"
+        "audio_response": "🔊 **सहायक (सहायता) की मौखिक प्रतिक्रिया:**"
     },
     "ta_IN": {
         "title": "🚨 சஹாயா அவசர உதவி",
@@ -91,7 +91,7 @@ TRANSLATIONS = {
         "directory_header": "📋 அவசர அடைவு (அழைக்க தட்டவும்)",
         "helpline": "உதவி எண்:",
         "realtime_desc": "நிகழ்நேர குரல் ஸ்ட்ரீம் செயலில் உள்ளது. உங்கள் அவசரநிலையை நேரடியாக பேசவும்.",
-        "audio_response": "🔊 **உரையாடல் குரல் பதில்:**"
+        "audio_response": "🔊 **உரையாடல் குரல் பதில் (சஹாயா):**"
     },
     "te_IN": {
         "title": "🚨 సహాయ అత్యవసర సహాయకుడు",
@@ -232,7 +232,7 @@ EMERGENCY_DIRECTORY = [
     {
         "title": "Medical & Ambulance",
         "icon": "🚑",
-        "number": "108",
+        "number": "Strictly 108",
         "keywords": ["ambulance", "hospital", "doctor", "accident", "heart", "injury", "medical", "bleeding", "unconscious", "ಆಂಬ್ಯುಲೆನ್ಸ್", "ಆಸ್ಪತ್ರೆ", "ಅಪಘಾತ", "एम्बुलेंस", "अस्पताल", "चोट", "ആംബുലൻസ്", "அவசர ஊர்தி", "ఆంబులెన్స్", "ରୋଗୀବାହକ"],
         "desc": "Immediate dispatch for medical crises, severe injuries, or emergency transport.",
         "first_aid": "1. Check airway, breathing & pulse.\n2. Apply firm pressure to bleeding wounds.\n3. Keep person calm until 108 arrives."
@@ -240,7 +240,7 @@ EMERGENCY_DIRECTORY = [
     {
         "title": "Police & Safety",
         "icon": "👮",
-        "number": "112",
+        "number": "Strictly 112",
         "keywords": ["police", "attack", "crime", "theft", "danger", "fight", "robbery", "help", "ಪೊಲೀಸ್", "ಸಹಾಯ", "पुलिस", "बचाओ", "പോലീസ്", "காவல்துறை", "పోలీసు", "ପୋଲିସ"],
         "desc": "Immediate assistance for crime, personal safety threats, or law enforcement.",
         "first_aid": "1. Move to a safe, well-lit public area.\n2. Stay on the line with 112 and provide landmarks."
@@ -248,7 +248,7 @@ EMERGENCY_DIRECTORY = [
     {
         "title": "Assault & Distress (Women/Men)",
         "icon": "🛡️",
-        "number": "1091",
+        "number": "Strictly 1091",
         "keywords": ["assault", "harassment", "abuse", "stalking", "distress", "threat", "molestation", "women", "men", "daim", "ದೌರ್ಜನ್ಯ", "ಕಿರುಕುಳ", "उत्पीड़न", "छेड़छाड़", "ഉപദ്രവം", "துன்புறுத்தல்", "వేధింపులు", "ଅତ୍ୟାଚାର"],
         "desc": "Dedicated protection and rapid response for assault, harassment, or severe distress.",
         "first_aid": "1. Seek immediate shelter in a safe shop or public group.\n2. Call 1091 or 112 instantly.\n3. Avoid confronting perpetrators alone."
@@ -256,7 +256,7 @@ EMERGENCY_DIRECTORY = [
     {
         "title": "Fire & Rescue",
         "icon": "🚒",
-        "number": "101",
+        "number": "Strictly 101",
         "keywords": ["fire", "burn", "smoke", "cylinder", "blast", "rescue", "ಬೆಂಕಿ", "आग", "തീ", "தீ", "అగ్ని", "ନିଆଁ"],
         "desc": "Emergency response for fires, gas leaks, burns, or structural entrapment.",
         "first_aid": "1. Evacuate immediately and stay low under smoke.\n2. Run cool water over minor burns for 10-15 mins."
@@ -264,7 +264,7 @@ EMERGENCY_DIRECTORY = [
     {
         "title": "Disaster & Flood Relief",
         "icon": "🌊",
-        "number": "1078",
+        "number": "Strictly 1078",
         "keywords": ["flood", "earthquake", "cyclone", "landslide", "disaster", "ಭೂಕಂಪ", "ಪ್ರವಾಹ", "बाढ़", "പ്രളയം", "வெள்ளம்", "వరద", "ବନ୍ୟା"],
         "desc": "Support during natural calamities, earthquakes, floods, and severe weather.",
         "first_aid": "1. Switch off main electrical power and gas lines.\n2. Move to higher ground and avoid downed wires."
@@ -319,7 +319,7 @@ t = TRANSLATIONS[lang_code]
 st.markdown(f"""
 <div class="header-banner">
     <h1>{t['title']}</h1>
-    <p>{t['subtitle']}</p>
+    <p>{t['subtitle']} (Sahaya)</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -423,9 +423,8 @@ if final_transcript:
     if not matched_services:
         matched_services = [EMERGENCY_DIRECTORY[0]]
 
-    # Generate and playback spoken response text
     primary_service = matched_services[0]
-    spoken_message = f"Emergency detected. Please call {primary_service['title']} at {primary_service['number']} immediately. {primary_service['desc']}"
+    spoken_message = f"Emergency detected. Please contact {primary_service['title']} immediately. {primary_service['desc']}"
     
     st.markdown(f"### {t['audio_response']}")
     audio_bytes_output = generate_speech_audio(spoken_message, lang_code)
@@ -445,7 +444,7 @@ if final_transcript:
                 <strong>{t['first_aid_label']}</strong><br>
                 <pre style="white-space: pre-wrap; font-family: inherit; margin:0; color:#cbd5e1;">{service['first_aid']}</pre>
             </div>
-            <a href="tel:{service['number']}" style="text-decoration:none;">
+            <a href="tel:{service['number'].replace('Strictly ', '')}" style="text-decoration:none;">
                 <button style="background-color:#dc2626; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; margin-top:10px;">
                     {call_button_text}
                 </button>
@@ -472,7 +471,7 @@ for row in grid_rows:
                 </div>
                 <div>
                     <div style="color:#38bdf8; font-weight:bold; margin-bottom:10px;">{t['helpline']} {srv['number']}</div>
-                    <a href="tel:{srv['number']}" style="text-decoration:none;">
+                    <a href="tel:{srv['number'].replace('Strictly ', '')}" style="text-decoration:none;">
                         <button style="background:#dc2626; color:white; border:none; padding:8px 14px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%;">
                             {call_button_text}
                         </button>
