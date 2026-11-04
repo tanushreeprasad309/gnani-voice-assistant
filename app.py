@@ -10,6 +10,12 @@ try:
 except ImportError:
     WEBRTC_AVAILABLE = False
 
+try:
+    from gtts import gTTS
+    GTTS_AVAILABLE = True
+except ImportError:
+    GTTS_AVAILABLE = False
+
 st.set_page_config(
     page_title="Sahaya Emergency Assistant",
     page_icon="🚨",
@@ -33,7 +39,8 @@ TRANSLATIONS = {
         "call_btn": "📞 Call {number} Now",
         "directory_header": "📋 Emergency Grid Directory (Tap Any Card to Call)",
         "helpline": "Helpline:",
-        "realtime_desc": "Real-time audio stream active. Speak your emergency to stream directly."
+        "realtime_desc": "Real-time audio stream active. Speak your emergency to stream directly.",
+        "audio_response": "🔊 **Spoken Assistant Response:**"
     },
     "kn_IN": {
         "title": "🚨 ಸಹಾಯ ತುರ್ತು ಸಹಾಯಕ",
@@ -49,7 +56,8 @@ TRANSLATIONS = {
         "call_btn": "📞 ಈಗ {number} ಗೆ ಕರೆ ಮಾಡಿ",
         "directory_header": "📋 ತುರ್ತು ಡೈರೆಕ್ಟರಿ (ಕರೆ ಮಾಡಲು ಕಾರ್ಡ್ ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ)",
         "helpline": "ಸಹಾಯವಾಣಿ:",
-        "realtime_desc": "ನೈಜ-ಸಮಯದ ಧ್ವನಿ ಪ್ರಸಾರ ಸಕ್ರಿಯವಾಗಿದೆ. ನೇರವಾಗಿ ಮಾತನಾಡಲು ನಿಮ್ಮ ತುರ್ತು ಪರಿಸ್ಥಿತಿಯನ್ನು ತಿಳಿಸಿ."
+        "realtime_desc": "ನೈಜ-ಸಮಯದ ಧ್ವನಿ ಪ್ರಸಾರ ಸಕ್ರಿಯವಾಗಿದೆ. ನೇರವಾಗಿ ಮಾತನಾಡಲು ನಿಮ್ಮ ತುರ್ತು ಪರಿಸ್ಥಿತಿಯನ್ನು ತಿಳಿಸಿ.",
+        "audio_response": "🔊 **ಸಹಾಯಕ ಧ್ವನಿ ಪ್ರತಿಕ್ರಿಯೆ:**"
     },
     "hi_IN": {
         "title": "🚨 सहायता आपातकालीन सहायक",
@@ -65,7 +73,8 @@ TRANSLATIONS = {
         "call_btn": "📞 अभी {number} पर कॉल करें",
         "directory_header": "📋 आपातकालीन डायरेक्टरी (कॉल करने के लिए टैप करें)",
         "helpline": "हेल्पलाइन:",
-        "realtime_desc": "रियल-टाइम ऑडियो स्ट्रीम सक्रिय है। अपनी आपात स्थिति सीधे बोलने के लिए उपयोग करें।"
+        "realtime_desc": "रियल-टाइम ऑडियो स्ट्रीम सक्रिय है। अपनी आपात स्थिति सीधे बोलने के लिए उपयोग करें।",
+        "audio_response": "🔊 **सहायक की मौखिक प्रतिक्रिया:**"
     },
     "ta_IN": {
         "title": "🚨 சஹாயா அவசர உதவி",
@@ -81,7 +90,8 @@ TRANSLATIONS = {
         "call_btn": "📞 உடனே {number} ஐ அழைக்கவும்",
         "directory_header": "📋 அவசர அடைவு (அழைக்க தட்டவும்)",
         "helpline": "உதவி எண்:",
-        "realtime_desc": "நிகழ்நேர குரல் ஸ்ட்ரீம் செயலில் உள்ளது. உங்கள் அவசரநிலையை நேரடியாக பேசவும்."
+        "realtime_desc": "நிகழ்நேர குரல் ஸ்ட்ரீம் செயலில் உள்ளது. உங்கள் அவசரநிலையை நேரடியாக பேசவும்.",
+        "audio_response": "🔊 **உரையாடல் குரல் பதில்:**"
     },
     "te_IN": {
         "title": "🚨 సహాయ అత్యవసర సహాయకుడు",
@@ -97,7 +107,8 @@ TRANSLATIONS = {
         "call_btn": "📞 ఇప్పుడే {number} కి కాల్ చేయండి",
         "directory_header": "📋 అత్యవసర డైరెక్టరీ (కాల్ చేయడానికి ట్యాప్ చేయండి)",
         "helpline": "హెల్ప్‌లైన్:",
-        "realtime_desc": "రియల్ టైమ్ ఆడియో స్ట్రీమ్ సక్రియంగా ఉంది. నేరుగా మాట్లాడటానికి మీ అత్యవసర పరిస్థితిని తెలపండి."
+        "realtime_desc": "రియల్ టైమ్ ఆడియో స్ట్రీమ్ సక్రియంగా ఉంది. నేరుగా మాట్లాడటానికి మీ అత్యవసర పరిస్థితిని తెలపండి.",
+        "audio_response": "🔊 **సహాయకుడి వాచిక ప్రతిస్పందన:**"
     },
     "ml_IN": {
         "title": "🚨 സഹായ അടിയന്തര അസിസ്റ്റന്റ്",
@@ -113,7 +124,8 @@ TRANSLATIONS = {
         "call_btn": "📞 ഇപ്പോൾ {number}-ലേക്ക് വിളിക്കുക",
         "directory_header": "📋 എമർജൻസി ഡയറക്ടറി (വിളിക്കാൻ ടാപ്പ് ചെയ്യുക)",
         "helpline": "ഹെൽപ്പ്‌ലൈൻ:",
-        "realtime_desc": "തത്സമയ ഓഡിയോ സ്ട്രീം സജീവമാണ്. നിങ്ങളുടെ അടിയന്തര സാഹചര്യം സംസാരിക്കുക."
+        "realtime_desc": "തത്സമയ ഓഡിയോ സ്ട്രീം സജീവമാണ്. നിങ്ങളുടെ അടിയന്തര സാഹചര്യം സംസാരിക്കുക.",
+        "audio_response": "🔊 **അസിസ്റ്റന്റിന്റെ ശബ്ദ പ്രതികരണം:**"
     },
     "mr_IN": {
         "title": "🚨 साहाय्य आणीबाणी सहाय्यक",
@@ -129,7 +141,8 @@ TRANSLATIONS = {
         "call_btn": "📞 आता {number} वर कॉल करा",
         "directory_header": "📋 आणीबाणी निर्देशिका (कॉल करण्यासाठी टॅप करा)",
         "helpline": "हेल्पलाइन:",
-        "realtime_desc": "रिअल-टाइम ऑडिओ प्रवाह सक्रिय आहे. तुमची आणीबाणी थेट बोला."
+        "realtime_desc": "रिअल-टाइम ऑडिओ प्रवाह सक्रिय आहे. तुमची आणीबाणी थेट बोला.",
+        "audio_response": "🔊 **सहाय्यकाचा ऑडिओ प्रतिसाद:**"
     },
     "gu_IN": {
         "title": "🚨 સહાય ઇમરજન્સી અસિસ્ટન્ટ",
@@ -145,7 +158,8 @@ TRANSLATIONS = {
         "call_btn": "📞 હમણાં જ {number} પર કૉલ કરો",
         "directory_header": "📋 ઇમરજન્સી ડિરેક્ટરી (કૉલ કરવા માટે ટેપ કરો)",
         "helpline": "હેલ્પલાઇન:",
-        "realtime_desc": "વાસ્તવિક સમયનું ઓડિયો સ્ટ્રીમ સક્રિય છે. તમારી કટોકટી સીધી બોલો."
+        "realtime_desc": "વાસ્તવિક સમયનું ઓડિયો સ્ટ્રીમ સક્રિય છે. તમારી કટોકટી સીધી બોલો.",
+        "audio_response": "🔊 **સહાયકનો અવાજ પ્રતિસાદ:**"
     },
     "bn_IN": {
         "title": "🚨 সহায় জরুরি সহকারী",
@@ -161,7 +175,8 @@ TRANSLATIONS = {
         "call_btn": "📞 এখনই {number}-এ কল করুন",
         "directory_header": "📋 জরুরি ডিরেক্টরি (কল করতে ট্যাপ করুন)",
         "helpline": "হেল্পলাইন:",
-        "realtime_desc": "রিয়েল-টাইম অডিও স্ট্রিম সক্রিয় রয়েছে। সরাসরি আপনার জরুরি অবস্থা বলুন।"
+        "realtime_desc": "রিয়েল-টাইম অডিও স্ট্রিম সক্রিয় রয়েছে। সরাসরি আপনার জরুরি অবস্থা বলুন।",
+        "audio_response": "🔊 **সহায়কের মৌখিক প্রতিক্রিয়া:**"
     },
     "pa_IN": {
         "title": "🚨 ਸਹਾਇ ਐਮਰਜੈਂਸੀ ਸਹਾਇਕ",
@@ -176,8 +191,9 @@ TRANSLATIONS = {
         "first_aid_label": "🩹 ਮੁੱਢਲੀ ਸਹਾਇਤਾ ਦਿਸ਼ਾ-ਨਿਰਦੇਸ਼:",
         "call_btn": "📞 ਹੁਣੇ {number} 'ਤੇ ਕਾਲ ਕਰੋ",
         "directory_header": "📋 ਐਮਰਜੈਂਸੀ ਡਾਇਰੈਕਟਰੀ (ਕਾਲ ਕਰਨ ਲਈ ਟੈਪ ਕਰੋ)",
-        "helpline": "ਹੈਲਪਲਾਈਨ:",
-        "realtime_desc": "ਰੀਅਲ-ਟਾਈਮ ਆਡੀਓ ਸਟ੍ਰੀਮ ਕਿਰਿਆਸ਼ੀਲ ਹੈ। ਆਪਣੀ ਐਮਰਜੈਂਸੀ ਸਿੱਧੀ ਬੋਲੋ।"
+        "helpline": "ਹੈਲಪ್ਲਾਈਨ:",
+        "realtime_desc": "ਰੀਅਲ-ਟਾਈਮ ਆਡੀਓ ਸਟ੍ਰੀਮ ਕਿਰਿਆਸ਼ੀਲ ਹੈ। ਆਪਣੀ ਐਮਰਜੈਂਸੀ ਸਿੱਧੀ ਬੋਲੋ।",
+        "audio_response": "🔊 **ਸਹਾਇਕ ਦਾ ਬੋਲਿਆ ਜਵਾਬ:**"
     },
     "or_IN": {
         "title": "🚨 ସହାୟ ଜରୁରୀକାଳୀନ ସହାୟକ",
@@ -193,7 +209,8 @@ TRANSLATIONS = {
         "call_btn": "📞 ବର୍ତ୍ତମାନ {number} କୁ କଲ୍ କରନ୍ତୁ",
         "directory_header": "📋 ଜରୁରୀକାଳୀନ ଡାଇରେକ୍ଟୋରୀ (କଲ୍ କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ)",
         "helpline": "ହେଲ୍ପଲାଇନ୍:",
-        "realtime_desc": "ରিয়েল-ଟାଇମ୍ ଅডিও ଷ୍ଟ୍ରିମ୍ ସକ୍ରିୟ ଅଛି। ଆପଣଙ୍କର ଜରୁରୀକାଳୀନ ପରିସ୍ଥିତି କୁହନ୍ତୁ।"
+        "realtime_desc": "ରিয়েল-ଟାଇମ୍ ଅডিও ଷ୍ଟ୍ରିମ୍ ସକ୍ରିୟ ଅଛି। ଆପଣଙ୍କର ଜରୁରୀକାଳୀନ ପରିସ୍ଥିତି କୁହନ୍ତୁ।",
+        "audio_response": "🔊 **ସହାୟକଙ୍କ କଥିତ ପ୍ରତିକ୍ରିୟା:**"
     }
 }
 
@@ -311,7 +328,6 @@ col_mic, col_type = st.columns(2)
 with col_mic:
     st.subheader(t['mic_header'])
     
-    # Real-time WebRTC live conversation stream integration if available
     if WEBRTC_AVAILABLE:
         st.caption(t['realtime_desc'])
         webrtc_streamer(
@@ -379,6 +395,19 @@ def match_emergency(transcript_text):
             matches.append(service)
     return matches
 
+def generate_speech_audio(text, code):
+    if not GTTS_AVAILABLE:
+        return None
+    try:
+        base_lang = code.split('_')[0]
+        tts = gTTS(text=text, lang=base_lang, slow=False)
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        return fp.read()
+    except Exception:
+        return None
+
 final_transcript = ""
 
 if manual_text:
@@ -393,6 +422,17 @@ if final_transcript:
     matched_services = match_emergency(final_transcript)
     if not matched_services:
         matched_services = [EMERGENCY_DIRECTORY[0]]
+
+    # Generate and playback spoken response text
+    primary_service = matched_services[0]
+    spoken_message = f"Emergency detected. Please call {primary_service['title']} at {primary_service['number']} immediately. {primary_service['desc']}"
+    
+    st.markdown(f"### {t['audio_response']}")
+    audio_bytes_output = generate_speech_audio(spoken_message, lang_code)
+    if audio_bytes_output:
+        st.audio(audio_bytes_output, format="audio/mp3", autoplay=True)
+    else:
+        st.info(spoken_message)
 
     st.subheader(t['action_header'])
     for service in matched_services:
