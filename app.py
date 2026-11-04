@@ -1,304 +1,203 @@
 import io
 import json
 import os
-import wave
-import numpy as np
 import requests
-import scipy.io.wavfile as wavfile
 import streamlit as st
 from streamlit_mic_recorder import mic_recorder
-
-# ==========================================
-# CONFIGURATION & GNANI.AI CREDENTIALS
-# ==========================================
-GNANI_TOKEN = os.getenv("GNANI_TOKEN", "YOUR_GNANI_TOKEN_HERE")
-GNANI_ACCESS_KEY = os.getenv("GNANI_ACCESS_KEY", "YOUR_GNANI_ACCESS_KEY_HERE")
-GNANI_API_URL = "https://asr.gnani.ai/asr"
-
-# ==========================================
-# PAGE CONFIGURATION (Professional App UI)
-# ==========================================
+==========================================
+PAGE CONFIGURATION
+==========================================
 st.set_page_config(
-    page_title="Emergency Indic Voice Assistant",
-    page_icon="🚨",
-    layout="centered",
-    initial_sidebar_state="collapsed"
+page_title="Sahaya Emergency Assistant",
+page_icon="🚨",
+layout="centered",
+initial_sidebar_state="collapsed",
 )
-
-# ==========================================
-# CUSTOM CSS STYLING (Native Mobile App Look)
-# ==========================================
+==========================================
+STYLING
+==========================================
 st.markdown("""
 <style>
-    .stApp {
-        background-color: #0e1117;
-        color: #ffffff;
-    }
-    .app-header {
-        background: linear-gradient(135deg, #d32f2f, #b71c1c);
-        padding: 1.5rem;
-        border-radius: 16px;
-        text-align: center;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4);
-    }
-    .app-header h1 {
-        margin: 0;
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: white;
-    }
-    .app-header p {
-        margin: 0.4rem 0 0 0;
-        font-size: 0.95rem;
-        color: #ffcdd2;
-    }
-    .emergency-card {
-        background-color: #1e222b;
-        border: 1px solid #2e3440;
-        border-radius: 14px;
-        padding: 1.2rem;
-        margin-bottom: 1rem;
-        transition: transform 0.2s, border-color 0.2s;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
-    .emergency-card:hover {
-        border-color: #ef5350;
-    }
-    .card-title {
-        font-size: 1.15rem;
-        font-weight: 600;
-        margin-bottom: 0.3rem;
-        color: #ffffff;
-    }
-    .card-number {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #ff5252;
-    }
-    .status-box {
-        background-color: #161b22;
-        border-left: 4px solid #58a6ff;
-        padding: 1rem;
-        border-radius: 8px;
-        margin-top: 1rem;
-    }
+.stApp { background-color: #f8fafc; color: #1e293b; }
+.header-banner {
+background: linear-gradient(135deg, #dc2626, #991b1b);
+padding: 1.5rem;
+border-radius: 16px;
+text-align: center;
+color: white;
+margin-bottom: 1.5rem;
+}
+.emergency-card {
+background-color: white;
+border: 1px solid #e2e8f0;
+border-left: 5px solid #dc2626;
+border-radius: 8px;
+padding: 1rem;
+margin-bottom: 1rem;
+box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
 </style>
 """, unsafe_allow_html=True)
-
-# ==========================================
-# 11-LANGUAGE INDIC & CODE-MIXED FRAMEWORK
-# ==========================================
+==========================================
+11-LANGUAGE SUPPORTED DATA
+==========================================
 LANGUAGES = {
-    "Kannada (ಕನ್ನಡ / Kanglish)": {"code": "kn_IN", "label": "ಕನ್ನಡ"},
-    "Hindi (हिन्दी / Hinglish)": {"code": "hi_IN", "label": "हिन्दी"},
-    "English (India)": {"code": "en_IN", "label": "English"},
-    "Tamil (தமிழ் / Tanglish)": {"code": "ta_IN", "label": "தமிழ்"},
-    "Telugu (తెలుగు / Tenglish)": {"code": "te_IN", "label": "తెలుగు"},
-    "Malayalam (മലയാളം / Manglish)": {"code": "ml_IN", "label": "മലയാളം"},
-    "Marathi (मराठी)": {"code": "mr_IN", "label": "मराठी"},
-    "Bengali (বাংলা)": {"code": "bn_IN", "label": "বাংলা"},
-    "Gujarati (ગુજરાતી)": {"code": "gu_IN", "label": "ગુજરાતી"},
-    "Punjabi (ਪੰਜਾਬੀ)": {"code": "pa_IN", "label": "ਪੰਜਾਬੀ"},
-    "Odia (ଓଡ଼ିଆ)": {"code": "or_IN", "label": "ଓଡ଼ିଆ"}
+"en_IN": "English (India)",
+"hi_IN": "हिन्दी (Hindi)",
+"kn_IN": "ಕನ್ನಡ (Kannada)",
+"ta_IN": "தமிழ் (Tamil)",
+"te_IN": "తెలుగు (Telugu)",
+"ml_IN": "മലയാളം (Malayalam)",
+"mr_IN": "मराठी (Marathi)",
+"gu_IN": "ગુજરાતી (Gujarati)",
+"bn_IN": "বাংলা (Bengali)",
+"pa_IN": "ਪੰਜਾਬੀ (Punjabi)",
+"or_IN": "ଓଡ଼ିଆ (Odia)",
 }
-
-EMERGENCY_SERVICES = {
-    "ambulance": {
-        "title": "🚑 Medical & Ambulance",
-        "number": "108",
-        "desc": "Critical medical emergency, accident, or hospital transport.",
-        "keywords": [
-            "ambulance", "medical", "hospital", "doctor", "accident", "blood", "heart", "injury", "pain",
-            "ಆಂಬ್ಯುಲೆನ್ಸ್", "ಆಸ್ಪತ್ರೆ", "ಡಾಕ್ಟರ್", "ಅಪಘಾತ", "एम्बुलेंस", "अस्पताल", "डॉक्टर",
-            "ஆம்புலன்ஸ்", "மருத்துவமனை", "అంబులెన్స్", "ఆసుపత్రి", "ആംബുലൻസ്"
-        ]
-    },
-    "police": {
-        "title": "🚓 Police Control Room",
-        "number": "112 / 100",
-        "desc": "Crime, theft, personal safety threat, or law enforcement.",
-        "keywords": [
-            "police", "theft", "crime", "robbery", "danger", "attack", "help", "unsafe", "stolen",
-            "ಪೊಲೀಸ್", "ಕಳ್ಳತನ", "ಸಹಾಯ", "पुलिस", "चोरी", "बचाओ",
-            "போலீஸ்", "காவல்துறை", "పోలీస్", "പോലീസ്"
-        ]
-    },
-    "fire": {
-        "title": "🚒 Fire & Rescue Services",
-        "number": "101",
-        "desc": "Fire outbreak, gas leak, building collapse, or rescue.",
-        "keywords": [
-            "fire", "smoke", "burn", "gas", "cylinder", "blast", "rescue",
-            "ಬೆಂಕಿ", "ಅಗ್ನಿಶಾಮಕ", "आग", "फायर", "தீ", "फायर ब्रिगेड", "अग्निशामक", "मदद"
-        ]
-    },
-    "women": {
-        "title": "🛡️ Women & Child Helpline",
-        "number": "1091 / 181",
-        "desc": "Immediate assistance for women and children in distress.",
-        "keywords": [
-            "women", "girl", "harassment", "stalking", "domestic", "child", "safety",
-            "ಮಹಿಳಾ", "ಮಕ್ಕಳ", "महिला", "सुरक्षा", "பெண்கள்", "महिला हेल्पलाइन"
-        ]
-    },
-    "cyber": {
-        "title": "💻 Cyber Crime & Fraud",
-        "number": "1930",
-        "desc": "UPI fraud, banking scam, OTP theft, or online harassment.",
-        "keywords": [
-            "cyber", "fraud", "scam", "money", "upi", "bank", "hacked", "otp",
-            "ಸೈಬರ್", "ವಂಚನೆ", "साइबर", "धोखाधड़ी", "बैंक"
-        ]
-    },
-    "disaster": {
-        "title": "🌊 Disaster Management (NDRF)",
-        "number": "1078",
-        "desc": "Flood, earthquake, cyclone, landslide, or severe weather.",
-        "keywords": [
-            "flood", "earthquake", "rain", "storm", "landslide", "disaster", "cyclone",
-            "ಪ್ರವಾಹ", "ಭೂಕಂಪ", "बाढ़", "भूकंप", "आपदा"
-        ]
-    }
+EMERGENCY_DIRECTORY = [
+{
+"title": "Medical Emergency & Ambulance",
+"number": "108",
+"keywords": ["ambulance", "hospital", "doctor", "accident", "heart", "injury", "medical", "ಆಂಬ್ಯುಲೆನ್ಸ್", "ಆಸ್ಪತ್ರೆ", "ಎಕ್ಸಿಡೆಂಟ್", "hospital", "доктор"],
+"desc": "Immediate dispatch for medical crises, severe injuries, or transport."
+},
+{
+"title": "Police Control Room",
+"number": "112",
+"keywords": ["police", "attack", "crime", "theft", "danger", "fight", "robbery", "поліція", "پुलिस", "ಪೊಲೀಸ್"],
+"desc": "Assistance for crime, safety threats, or law enforcement."
+},
+{
+"title": "Fire and Rescue Services",
+"number": "101",
+"keywords": ["fire", "burn", "smoke", "cylander", "blast", "rescue", "आग", "ಬೆಂಕಿ"],
+"desc": "Emergency response for fires, gas leaks, or entrapment."
+},
+{
+"title": "Women Helpline",
+"number": "1091",
+"keywords": ["women", "harassment", "abuse", "safety", "women safety", "महिला", "ಮಹಿಳಾ ಸಹಾಯ"],
+"desc": "Dedicated support and protection for women in distress."
+},
+{
+"title": "Disaster Management",
+"number": "1078",
+"keywords": ["flood", "earthquake", "cyclone", "landslide", "disaster", "ಭೂಕಂಪ", "बाढ़"],
+"desc": "Support during natural calamities and severe weather events."
 }
-
-# ==========================================
-# AUDIO PROCESSING & SPEECH-TO-TEXT
-# ==========================================
-def transcribe_audio(audio_bytes, lang_code):
-    """Sends recorded audio bytes to Gnani.ai ASR API with fallback handling."""
-    if not audio_bytes:
-        return ""
-
-    # If API credentials are valid, call Gnani.ai API
-    if GNANI_TOKEN != "YOUR_GNANI_TOKEN_HERE" and GNANI_ACCESS_KEY != "YOUR_GNANI_ACCESS_KEY_HERE":
-        try:
-            headers = {
-                "token": GNANI_TOKEN,
-                "accesskey": GNANI_ACCESS_KEY,
-                "lang": lang_code,
-                "audioformat": "wav"
-            }
-            files = {"audio_file": ("voice.wav", io.BytesIO(audio_bytes), "audio/wav")}
-            response = requests.post(GNANI_API_URL, headers=headers, files=files, timeout=15)
-            if response.status_code == 200:
-                data = response.json()
-                return data.get("transcript", "")
-        except Exception as e:
-            st.warning(f"API Connection Notice: Switching to fallback mode ({e})")
-
-    return None
-
-def detect_intent(text):
-    """Detects emergency category from multilingual or code-mixed text."""
-    if not text:
-        return []
-    text_lower = text.lower()
-    matched = []
-    for key, service in EMERGENCY_SERVICES.items():
-        if any(kw.lower() in text_lower for kw in service["keywords"]):
-            matched.append(service)
-    return matched
-
-# ==========================================
-# MAIN APPLICATION UI
-# ==========================================
+]
+==========================================
+BACKEND LOGIC (Mockable ASR)
+==========================================
+def process_audio_transcription(audio_bytes, lang_code):
+"""
+Sends audio to Gnani API if credentials exist,
+otherwise returns a safe fallback message to prevent crashes.
+"""
+token = os.getenv("GNANI_TOKEN")
+access_key = os.getenv("GNANI_ACCESS_KEY")
+if token and access_key and token != "YOUR_GNANI_TOKEN_HERE":
+try:
+url = "https://asr.gnani.ai/asr"
+headers = {"token": token, "accesskey": access_key, "lang": lang_code}
+files = {"audio_file": ("voice.wav", io.BytesIO(audio_bytes), "audio/wav")}
+response = requests.post(url, headers=headers, files=files, timeout=10)
+if response.status_code == 200:
+return response.json().get("transcript", "")
+except Exception:
+pass # Fallback to text matching
+return None
+def match_emergency(transcript_text):
+if not transcript_text:
+return []
+text_lower = transcript_text.lower()
+matches = []
+for service in EMERGENCY_DIRECTORY:
+if any(kw in text_lower for kw in service["keywords"]):
+matches.append(service)
+return matches
+==========================================
+UI LAYOUT
+==========================================
 st.markdown("""
-<div class="app-header">
-    <h1>🚨 Indic Voice Emergency Response</h1>
-    <p>Multilingual & Code-Mixed AI Voice Assistant (11 Languages)</p>
+<div class="header-banner">
+<h1>🚨 Sahaya Emergency Assistant</h1>
+<p>Multilingual Emergency Response & Directory</p>
 </div>
 """, unsafe_allow_html=True)
-
-# 1. Language Selection
-selected_lang_name = st.selectbox(
-    "🌐 Select Your Language / ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ / अपनी भाषा चुनें",
-    options=list(LANGUAGES.keys()),
-    index=0
+Language Selector
+selected_lang_label = st.selectbox(
+"🌐 Select Language / भाषा / ಭಾಷೆ",
+options=list(LANGUAGES.values()),
+index=0
 )
-current_lang_code = LANGUAGES[selected_lang_name]["code"]
-
-st.write("### 🎙️ Speak Your Emergency")
-st.caption("Speak naturally (supports pure regional languages as well as Kanglish, Hinglish, Tanglish, etc.)")
-
-# 2. Browser Microphone Recorder (Cloud-Safe)
-audio_data = mic_recorder(
-    start_prompt="🔴 Tap to Speak Emergency",
-    stop_prompt="⏹️ Stop Recording",
-    just_once=False,
-    use_container_width=True,
-    format="wav",
-    key="emergency_recorder"
+Reverse lookup code
+lang_code = [k for k, v in LANGUAGES.items() if v == selected_lang_label][0]
+st.write("### 🎙️ Voice Input")
+audio_info = mic_recorder(
+start_prompt="🔴 Tap to Speak",
+stop_prompt="⏹️ Stop Recording",
+just_once=True,
+key="mic"
 )
-
-# 3. Text / Manual Input Fallback for Testing
-manual_query = st.text_input(
-    "⌨️ Or type your emergency (e.g., 'Need ambulance jaldi', 'ಪೊಲೀಸ್ ಸಹಾಯ ಬೇಕು'):",
-    placeholder="Type here if microphone is unavailable..."
-)
-
-# Process Voice or Text Input
-active_transcript = ""
-
-if audio_data and "bytes" in audio_data:
-    st.audio(audio_data["bytes"], format="audio/wav")
-    with st.spinner("Processing voice input..."):
-        transcript_result = transcribe_audio(audio_data["bytes"], current_lang_code)
-        if transcript_result:
-            active_transcript = transcript_result
-        else:
-            st.info("💡 Voice recorded! (Add your `GNANI_TOKEN` and `GNANI_ACCESS_KEY` in Streamlit Secrets for live ASR, or test intent routing using the text box above.)")
-
-if manual_query:
-    active_transcript = manual_query
-
-# Display Detected Intent & Actionable Response
-if active_transcript:
-    st.markdown(f"""
-    <div class="status-box">
-        <strong>🗣️ Recognized Input ({LANGUAGES[selected_lang_name]['label']}):</strong><br>
-        "{active_transcript}"
-    </div>
-    """, unsafe_allow_html=True)
-
-    matched_services = detect_intent(active_transcript)
-
-    st.write("### ⚡ Immediate Action Recommended")
-    if matched_services:
-        for service in matched_services:
-            st.markdown(f"""
-            <div class="emergency-card" style="border-color: #ff5252; background-color: #2b1d1d;">
-                <div class="card-title">{service['title']}</div>
-                <div class="card-number">📞 Dial: <a href="tel:{service['number'].split()[0]}" style="color: #ff5252; text-decoration: underline;">{service['number']}</a></div>
-                <div style="font-size: 0.9rem; color: #cfd8dc; margin-top: 0.4rem;">{service['desc']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-    else:
-        st.warning("General Emergency Detected — Routing to National Emergency Number (112)")
-        st.markdown("""
-        <div class="emergency-card" style="border-color: #ffa726;">
-            <div class="card-title">🚨 National Emergency Response System (ERSS)</div>
-            <div class="card-number">📞 Dial: <a href="tel:112" style="color: #ffa726; text-decoration: underline;">112</a></div>
-            <div style="font-size: 0.9rem; color: #cfd8dc; margin-top: 0.4rem;">All-in-one emergency dispatch for Police, Fire, and Ambulance.</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+st.write("### ⌨️ Or Type Request")
+manual_text = st.text_input("Type your emergency here (e.g., 'Need ambulance', 'Accident happened'):")
+Execution Flow
+final_transcript = ""
+if audio_info and "bytes" in audio_info:
+st.audio(audio_info["bytes"], format="audio/wav")
+with st.spinner("Processing voice..."):
+transcription = process_audio_transcription(audio_info["bytes"], lang_code)
+if transcription:
+final_transcript = transcription
+else:
+final_transcript = manual_text # Fallback to manual if audio processing fails/skips
+if manual_text:
+final_transcript = manual_text
+Results Display
+if final_transcript:
+st.info(f"Detected Input: {final_transcript}")
+matched_services = match_emergency(final_transcript)
+st.write("---")
+st.header("⚡ Recommended Action")
+if matched_services:
+for service in matched_services:
+st.markdown(f"""
+<div class="emergency-card">
+<h3>{service['title']}</h3>
+<p>{service['desc']}</p>
+<a href="tel:{service['number']}">
+<button style="background-color:#dc2626; color:white; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">
+📞 Call {service['number']}
+</button>
+</a>
+</div>
+""", unsafe_allow_html=True)
+else:
+st.warning("No specific emergency matched. Please use the general emergency number below.")
+st.markdown("""
+<div class="emergency-card" style="border-left-color: #ca8a04;">
+<h3>General Emergency Helpline</h3>
+<p>Universal emergency response.</p>
+<a href="tel:112">
+<button style="background-color:#ca8a04; color:white; border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">
+📞 Call 112
+</button>
+</a>
+</div>
+""", unsafe_allow_html=True)
 st.divider()
-
-# ==========================================
-# QUICK-DIAL EMERGENCY DIRECTORY GRID
-# ==========================================
-st.write("### 📋 Quick-Dial Emergency Directory")
-col1, col2 = st.columns(2)
-
-services_list = list(EMERGENCY_SERVICES.values())
-for idx, srv in enumerate(services_list):
-    target_col = col1 if idx % 2 == 0 else col2
-    with target_col:
-        st.markdown(f"""
-        <div class="emergency-card">
-            <div class="card-title">{srv['title']}</div>
-            <div class="card-number"><a href="tel:{srv['number'].split()[0]}" style="color: #ff5252; text-decoration: none;">📞 {srv['number']}</a></div>
-            <div style="font-size: 0.85rem; color: #b0bec5; margin-top: 0.3rem;">{srv['desc']}</div>
-        </div>
-        """, unsafe_allow_html=True)
+Directory Section
+st.header("📋 Emergency Directory")
+for srv in EMERGENCY_DIRECTORY:
+st.markdown(f"""
+<div style="background:white; padding:10px; margin-bottom:10px; border-radius:5px; border:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+<div>
+<strong>{srv['title']}</strong>
+<span style="color:#64748b; font-size:0.9em;">{srv['desc']}</span>
+</div>
+<a href="tel:{srv['number']}" style="background:#e2e8f0; color:#1e293b; padding:8px 16px; border-radius:5px; text-decoration:none; font-weight:bold;">
+📞 {srv['number']}
+</a>
+</div>
+""", unsafe_allow_html=True)
