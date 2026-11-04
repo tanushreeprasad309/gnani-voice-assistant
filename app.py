@@ -4,6 +4,12 @@ import requests
 import streamlit as st
 from streamlit_mic_recorder import mic_recorder
 
+try:
+    from streamlit_webrtc import webrtc_streamer, WebRtcMode, RTCConfiguration
+    WEBRTC_AVAILABLE = True
+except ImportError:
+    WEBRTC_AVAILABLE = False
+
 st.set_page_config(
     page_title="Sahaya Emergency Assistant",
     page_icon="🚨",
@@ -16,7 +22,7 @@ TRANSLATIONS = {
     "en_IN": {
         "title": "🚨 Sahaya Emergency Assistant",
         "subtitle": "Multilingual Voice First-Aid & Emergency Dispatch",
-        "mic_header": "🎙️ Voice Input",
+        "mic_header": "🎙️ Voice Input & Live Stream",
         "mic_start": "🔴 Tap to Speak",
         "mic_stop": "⏹️ Stop",
         "type_header": "⌨️ Text Input",
@@ -26,12 +32,13 @@ TRANSLATIONS = {
         "first_aid_label": "🩹 First-Aid Guidelines:",
         "call_btn": "📞 Call {number} Now",
         "directory_header": "📋 Emergency Grid Directory (Tap Any Card to Call)",
-        "helpline": "Helpline:"
+        "helpline": "Helpline:",
+        "realtime_desc": "Real-time audio stream active. Speak your emergency to stream directly."
     },
     "kn_IN": {
         "title": "🚨 ಸಹಾಯ ತುರ್ತು ಸಹಾಯಕ",
         "subtitle": "ಬಹುಭಾಷಾ ಧ್ವನಿ ಪ್ರಥಮ ಚಿಕಿತ್ಸೆ ಮತ್ತು ತುರ್ತು ಪ್ರಸರಣ",
-        "mic_header": "🎙️ ಧ್ವನಿ ಇನ್ಪುಟ್",
+        "mic_header": "🎙️ ಧ್ವನಿ ಇನ್ಪುಟ್ ಮತ್ತು ಲೈವ್ ಸ್ಟ್ರೀಮ್",
         "mic_start": "🔴 ಮಾತನಾಡಲು ಟ್ಯಾಪ್ ಮಾಡಿ",
         "mic_stop": "⏹️ ನಿಲ್ಲಿಸಿ",
         "type_header": "⌨️ ಪಠ್ಯ ಇನ್ಪುಟ್",
@@ -41,12 +48,13 @@ TRANSLATIONS = {
         "first_aid_label": "🩹 ಪ್ರಥಮ ಚಿಕಿತ್ಸಾ ಮಾರ್ಗಸೂಚಿಗಳು:",
         "call_btn": "📞 ಈಗ {number} ಗೆ ಕರೆ ಮಾಡಿ",
         "directory_header": "📋 ತುರ್ತು ಡೈರೆಕ್ಟರಿ (ಕರೆ ಮಾಡಲು ಕಾರ್ಡ್ ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ)",
-        "helpline": "ಸಹಾಯವಾಣಿ:"
+        "helpline": "ಸಹಾಯವಾಣಿ:",
+        "realtime_desc": "ನೈಜ-ಸಮಯದ ಧ್ವನಿ ಪ್ರಸಾರ ಸಕ್ರಿಯವಾಗಿದೆ. ನೇರವಾಗಿ ಮಾತನಾಡಲು ನಿಮ್ಮ ತುರ್ತು ಪರಿಸ್ಥಿತಿಯನ್ನು ತಿಳಿಸಿ."
     },
     "hi_IN": {
         "title": "🚨 सहायता आपातकालीन सहायक",
         "subtitle": "बहुभाषी वॉयस फर्स्ट-एड और आपातकालीन प्रेषण",
-        "mic_header": "🎙️ वॉयस इनपुट",
+        "mic_header": "🎙️ वॉयस इनपुट और लाइव स्ट्रीम",
         "mic_start": "🔴 बोलने के लिए टैप करें",
         "mic_stop": "⏹️ रोकें",
         "type_header": "⌨️ टेक्स्ट इनपुट",
@@ -56,12 +64,13 @@ TRANSLATIONS = {
         "first_aid_label": "🩹 प्राथमिक उपचार दिशानिर्देश:",
         "call_btn": "📞 अभी {number} पर कॉल करें",
         "directory_header": "📋 आपातकालीन डायरेक्टरी (कॉल करने के लिए टैप करें)",
-        "helpline": "हेल्पलाइन:"
+        "helpline": "हेल्पलाइन:",
+        "realtime_desc": "रियल-टाइम ऑडियो स्ट्रीम सक्रिय है। अपनी आपात स्थिति सीधे बोलने के लिए उपयोग करें।"
     },
     "ta_IN": {
         "title": "🚨 சஹாயா அவசர உதவி",
         "subtitle": "பன்மொழி குரல் முதலுதவி & அவசர அனுப்புதல்",
-        "mic_header": "🎙️ குரல் உள்ளீடு",
+        "mic_header": "🎙️ குரல் உள்ளீடு மற்றும் நேரலை",
         "mic_start": "🔴 பேச தட்டவும்",
         "mic_stop": "⏹️ நிறுத்து",
         "type_header": "⌨️ உரை உள்ளீடு",
@@ -71,12 +80,13 @@ TRANSLATIONS = {
         "first_aid_label": "🩹 முதலுதவி வழிகாட்டுதல்கள்:",
         "call_btn": "📞 உடனே {number} ஐ அழைக்கவும்",
         "directory_header": "📋 அவசர அடைவு (அழைக்க தட்டவும்)",
-        "helpline": "உதவி எண்:"
+        "helpline": "உதவி எண்:",
+        "realtime_desc": "நிகழ்நேர குரல் ஸ்ட்ரீம் செயலில் உள்ளது. உங்கள் அவசரநிலையை நேரடியாக பேசவும்."
     },
     "te_IN": {
         "title": "🚨 సహాయ అత్యవసర సహాయకుడు",
         "subtitle": "బహుభాషా వాయిస్ ఫస్ట్-ఎయిడ్ & ఎమర్జెన్సీ డిస్పాచ్",
-        "mic_header": "🎙️ వాయిస్ ఇన్‌పుట్",
+        "mic_header": "🎙️ వాయిస్ ఇన్‌పుట్ & లైవ్ స్ట్రీమ్",
         "mic_start": "🔴 మాట్లాడటానికి నొక్కండి",
         "mic_stop": "⏹️ ఆపు",
         "type_header": "⌨️ టెక్స్ట్ ఇన్‌పుట్",
@@ -86,12 +96,13 @@ TRANSLATIONS = {
         "first_aid_label": "🩹 ప్రథమ చికిత్స మార్గదర్శకాలు:",
         "call_btn": "📞 ఇప్పుడే {number} కి కాల్ చేయండి",
         "directory_header": "📋 అత్యవసర డైరెక్టరీ (కాల్ చేయడానికి ట్యాప్ చేయండి)",
-        "helpline": "హెల్ప్‌లైన్:"
+        "helpline": "హెల్ప్‌లైన్:",
+        "realtime_desc": "రియల్ టైమ్ ఆడియో స్ట్రీమ్ సక్రియంగా ఉంది. నేరుగా మాట్లాడటానికి మీ అత్యవసర పరిస్థితిని తెలపండి."
     },
     "ml_IN": {
         "title": "🚨 സഹായ അടിയന്തര അസിസ്റ്റന്റ്",
         "subtitle": "ബഹുഭാഷാ വോയ്സ് ഫസ്റ്റ് എയ്ഡ് & എമർജൻസി ഡിസ്പാച്ച്",
-        "mic_header": "🎙️ വോയ്സ് ഇൻപുട്ട്",
+        "mic_header": "🎙️ വോയ്സ് ഇൻപുട്ട് & ലൈവ് സ്ട്രീം",
         "mic_start": "🔴 സംസാരിക്കാൻ ടാപ്പ് ചെയ്യുക",
         "mic_stop": "⏹️ നിർത്തുക",
         "type_header": "⌨️ ടെക്സ്റ്റ് ഇൻപുട്ട്",
@@ -101,12 +112,13 @@ TRANSLATIONS = {
         "first_aid_label": "🩹 പ്രഥമശുശ്രൂഷ മാർഗ്ഗനിർദ്ദേശങ്ങൾ:",
         "call_btn": "📞 ഇപ്പോൾ {number}-ലേക്ക് വിളിക്കുക",
         "directory_header": "📋 എമർജൻസി ഡയറക്ടറി (വിളിക്കാൻ ടാപ്പ് ചെയ്യുക)",
-        "helpline": "ഹെൽಪ್‌ലൈൻ:"
+        "helpline": "ഹെൽപ്പ്‌ലൈൻ:",
+        "realtime_desc": "തത്സമയ ഓഡിയോ സ്ട്രീം സജീവമാണ്. നിങ്ങളുടെ അടിയന്തര സാഹചര്യം സംസാരിക്കുക."
     },
     "mr_IN": {
         "title": "🚨 साहाय्य आणीबाणी सहाय्यक",
         "subtitle": "बहुभाषिक व्हॉइस फर्स्ट-एड आणि आपत्कालीन प्रेषण",
-        "mic_header": "🎙️ व्हॉइस इनपुट",
+        "mic_header": "🎙️ व्हॉइस इनपुट आणि लाईव्ह स्ट्रीम",
         "mic_start": "🔴 बोलण्यासाठी टॅप करा",
         "mic_stop": "⏹️ थांबवा",
         "type_header": "⌨️ मजकूर इनपुट",
@@ -116,12 +128,13 @@ TRANSLATIONS = {
         "first_aid_label": "🩹 प्रथमोपचार मार्गदर्शक तत्त्वे:",
         "call_btn": "📞 आता {number} वर कॉल करा",
         "directory_header": "📋 आणीबाणी निर्देशिका (कॉल करण्यासाठी टॅप करा)",
-        "helpline": "हेल्पलाइन:"
+        "helpline": "हेल्पलाइन:",
+        "realtime_desc": "रिअल-टाइम ऑडिओ प्रवाह सक्रिय आहे. तुमची आणीबाणी थेट बोला."
     },
     "gu_IN": {
         "title": "🚨 સહાય ઇમરજન્સી અસિસ્ટન્ટ",
         "subtitle": "બહુભাষી વૉઇસ ફર્સ્ટ-એઇડ અને ઇમરજન્સી ડિસ્પેચ",
-        "mic_header": "🎙️ વૉઇસ ઇનપુટ",
+        "mic_header": "🎙️ વૉઇસ ઇનપુટ અને લાઈવ સ્ટ્રીમ",
         "mic_start": "🔴 બોલવા માટે ટેપ કરો",
         "mic_stop": "⏹️ બંધ કરો",
         "type_header": "⌨️ ટેક્સ્ટ ઇનપુટ",
@@ -131,12 +144,13 @@ TRANSLATIONS = {
         "first_aid_label": "🩹 પ્રાથમિક સારવાર માર્ગદર્શિકા:",
         "call_btn": "📞 હમણાં જ {number} પર કૉલ કરો",
         "directory_header": "📋 ઇમરજન્સી ડિરેક્ટરી (કૉલ કરવા માટે ટેપ કરો)",
-        "helpline": "હેલ્પલાઇન:"
+        "helpline": "હેલ્પલાઇન:",
+        "realtime_desc": "વાસ્તવિક સમયનું ઓડિયો સ્ટ્રીમ સક્રિય છે. તમારી કટોકટી સીધી બોલો."
     },
     "bn_IN": {
         "title": "🚨 সহায় জরুরি সহকারী",
         "subtitle": "বহুভাষিক ভয়েস ফার্স্ট-এইড এবং জরুরি প্রেরণ",
-        "mic_header": "🎙️ ভয়েস ইনপুট",
+        "mic_header": "🎙️ ভয়েস ইনপুট এবং লাইভ স্ট্রিম",
         "mic_start": "🔴 কথা বলতে ট্যাপ করুন",
         "mic_stop": "⏹️ থামুন",
         "type_header": "⌨️ টেক্সট ইনপুট",
@@ -146,14 +160,15 @@ TRANSLATIONS = {
         "first_aid_label": "🩹 প্রাথমিক চিকিৎসার নির্দেশিকা:",
         "call_btn": "📞 এখনই {number}-এ কল করুন",
         "directory_header": "📋 জরুরি ডিরেক্টরি (কল করতে ট্যাপ করুন)",
-        "helpline": "হেল্পলাইন:"
+        "helpline": "হেল্পলাইন:",
+        "realtime_desc": "রিয়েল-টাইম অডিও স্ট্রিম সক্রিয় রয়েছে। সরাসরি আপনার জরুরি অবস্থা বলুন।"
     },
     "pa_IN": {
-        "title": "🚨 ਸਹਾਇ ਐਮਰਜન્ਸੀ ਸਹਾਇਕ",
-        "subtitle": "ਬਹੁ-ਭাষੀ ਵాయిਸ ਫਸਟ-ਏਡ ਅਤੇ ਐਮਰਜન્ਸੀ ਡਿਸਪੈਚ",
-        "mic_header": "🎙️ ਵాయిਸ ਇਨਪੁਟ",
+        "title": "🚨 ਸਹਾਇ ਐਮਰਜੈਂਸੀ ਸਹਾਇਕ",
+        "subtitle": "ਬਹੁ-ਭাষੀ ਵాయిਸ ਫਸਟ-ਏਡ ਅਤੇ ਐਮਰਜੈਂਸੀ ਡਿਸਪੈਚ",
+        "mic_header": "🎙️ ਵాయిਸ ਇਨਪੁਟ ਅਤੇ ਲਾਈਵ ਸਟ੍ਰੀਮ",
         "mic_start": "🔴 ਬੋਲਣ ਲਈ ਟੈਪ ਕਰੋ",
-        "mic_stop": "⏹️ ਰੋకో",
+        "mic_stop": "⏹️ ਰੋਕੋ",
         "type_header": "⌨️ ਟੈਕਸਟ ਇਨਪੁਟ",
         "type_placeholder": "ਉਦਾਹਰਨ ਲਈ ਐਂਬੂਲੈਂਸ ਚਾਹੀਦੀ ਹੈ ਜਾਂ ਹਾਦਸਾ",
         "detected": "🗣️ **ਪਤਾ ਲੱਗੀ ਐਮਰਜੈਂਸੀ:**",
@@ -161,22 +176,24 @@ TRANSLATIONS = {
         "first_aid_label": "🩹 ਮੁੱਢਲੀ ਸਹਾਇਤਾ ਦਿਸ਼ਾ-ਨਿਰਦੇਸ਼:",
         "call_btn": "📞 ਹੁਣੇ {number} 'ਤੇ ਕਾਲ ਕਰੋ",
         "directory_header": "📋 ਐਮਰਜੈਂਸੀ ਡਾਇਰੈਕਟਰੀ (ਕਾਲ ਕਰਨ ਲਈ ਟੈਪ ਕਰੋ)",
-        "helpline": "ਹੈਲਪਲਾਈਨ:"
+        "helpline": "ਹੈਲਪਲਾਈਨ:",
+        "realtime_desc": "ਰੀਅਲ-ਟਾਈਮ ਆਡੀਓ ਸਟ੍ਰੀਮ ਕਿਰਿਆਸ਼ੀਲ ਹੈ। ਆਪਣੀ ਐਮਰਜੈਂਸੀ ਸਿੱਧੀ ਬੋਲੋ।"
     },
     "or_IN": {
         "title": "🚨 ସହାୟ ଜରୁରୀକାଳୀନ ସହାୟକ",
         "subtitle": "ବହୁଭାଷୀ ଭଏସ୍ ଫାଷ୍ଟ-ଏଡ୍ ଏବଂ ଜରୁରୀକାଳୀନ ପ୍ରେରଣ",
-        "mic_header": "🎙️ ଭଏସ୍ ઇନପୁଟ୍",
+        "mic_header": "🎙️ ଭଏସ୍ ଇନପୁଟ୍ ଏବଂ ଲାଇଭ୍ ଷ୍ଟ୍ରିମ୍",
         "mic_start": "🔴 କଥିତ କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
         "mic_stop": "⏹️ ଅଟକାନ୍ତୁ",
-        "type_header": "⌨️ ଟେକ୍ସଟ୍ ઇନପୁଟ୍",
+        "type_header": "⌨️ ଟେକ୍ସଟ୍ ଇନପୁଟ୍",
         "type_placeholder": "ଯେପରି ଆମ୍ବୁଲାନ୍ସ ଆବଶ୍ୟକ କିମ୍ବା ଦୁର୍ଘଟଣା",
         "detected": "🗣️ **ଚିହ୍ନଟ ଜରୁରୀକାଳୀନ ପରିସ୍ଥିତି:**",
         "action_header": "⚡ ପରାମର୍ଶିତ କାର୍ଯ୍ୟ ଏବଂ ପ୍ରଥମ ଚିକିତ୍ସା",
         "first_aid_label": "🩹 ପ୍ରଥମ ଚିକିତ୍ସା ନିର୍ଦ୍ଦେଶାବଳୀ:",
         "call_btn": "📞 ବର୍ତ୍ତମାନ {number} କୁ କଲ୍ କରନ୍ତୁ",
         "directory_header": "📋 ଜରୁରୀକାଳୀନ ଡାଇରେକ୍ଟୋରୀ (କଲ୍ କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ)",
-        "helpline": "ହେଲ୍ପଲାଇନ୍:"
+        "helpline": "ହେଲ୍ପଲାଇନ୍:",
+        "realtime_desc": "ରিয়েল-ଟାଇମ୍ ଅডিও ଷ୍ଟ୍ରିମ୍ ସକ୍ରିୟ ଅଛି। ଆପଣଙ୍କର ଜରୁରୀକାଳୀନ ପରିସ୍ଥିତି କୁହନ୍ତୁ।"
     }
 }
 
@@ -293,11 +310,24 @@ col_mic, col_type = st.columns(2)
 
 with col_mic:
     st.subheader(t['mic_header'])
+    
+    # Real-time WebRTC live conversation stream integration if available
+    if WEBRTC_AVAILABLE:
+        st.caption(t['realtime_desc'])
+        webrtc_streamer(
+            key="emergency-stream",
+            mode=WebRtcMode.SENDONLY,
+            rtc_configuration=RTCConfiguration(
+                {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+            ),
+            media_stream_constraints={"video": False, "audio": True}
+        )
+    
     audio_info = mic_recorder(
         start_prompt=t['mic_start'],
         stop_prompt=t['mic_stop'],
         just_once=True,
-        key="mic_grid_v2"
+        key="mic_grid_v3"
     )
 
 with col_type:
@@ -355,7 +385,7 @@ if manual_text:
     final_transcript = manual_text
 elif audio_info and "bytes" in audio_info:
     st.audio(audio_info["bytes"], format="audio/wav")
-    with st.spinner("Analyzing emergency voice input..."):
+    with st.spinner("Analyzing emergency voice input & generating instant response..."):
         final_transcript = process_audio_transcription(audio_info["bytes"], lang_code)
 
 if final_transcript:
