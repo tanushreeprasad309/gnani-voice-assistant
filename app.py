@@ -5,29 +5,76 @@ import streamlit as st
 from streamlit_mic_recorder import mic_recorder
 
 # --------------------------------------------------
-# PAGE CONFIGURATION
+# PAGE CONFIGURATION (Professional App Styling)
 # --------------------------------------------------
 st.set_page_config(
-    page_title="Sahaya - Multilingual Emergency Voice Assistant",
-    page_icon="🆘",
+    page_title="Sahaya Emergency Assistant",
+    page_icon="🚨",
     layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
-st.title("🆘 Sahaya: Emergency Voice Assistant")
-st.write(
-    "Namaste! I am **Sahaya**, your AI-powered multilingual voice assistant for emergency and first-aid support across India."
-)
+# Professional CSS Styling
+st.markdown("""
+    <style>
+    .main {
+        background-color: #f4f6f8;
+    }
+    .stApp {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    div.stButton > button {
+        width: 100%;
+        border-radius: 12px;
+        height: 75px;
+        font-size: 15px;
+        font-weight: 700;
+        background-color: #ffffff;
+        border: 1px solid #dcdfe6;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+    div.stButton > button:hover {
+        border-color: #ff4b4b;
+        color: #ff4b4b;
+        box-shadow: 0 6px 12px rgba(255,75,75,0.15);
+        transform: translateY(-2px);
+    }
+    .emergency-title {
+        color: #1e293b;
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .custom-divider {
+        height: 2px;
+        background-color: #e2e8f0;
+        margin: 25px 0;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-st.warning(
-    "⚠️ **Disclaimer**: Sahaya provides immediate first-aid instructions and guidance, but is not an emergency dispatch system. "
-    "Always dial **112** (National Emergency Helpline) immediately for police, ambulance, or fire services in India."
+# App Header
+st.title("🚨 Sahaya Emergency Assistant")
+st.markdown("Your intelligent, multilingual first-aid companion. Select an emergency below for immediate, step-by-step guidance.")
+
+st.error(
+    "⚠️ **CRITICAL DISCLAIMER**: Sahaya provides immediate first-aid instructions "
+    "and informational guidance. It is NOT an emergency dispatch service and cannot "
+    "automatically contact emergency services. In India, dial **112** immediately for "
+    "police, ambulance, or fire rescue."
 )
 
 # --------------------------------------------------
-# GNANI.AI CREDENTIALS & ENDPOINTS
+# CREDENTIALS & API CONFIGURATION
 # --------------------------------------------------
 def get_secret(name):
-    """Safely fetch credentials from Streamlit Secrets or environment variables."""
     try:
         val = st.secrets.get(name)
         if val:
@@ -42,170 +89,231 @@ GNANI_ACCESS_KEY = get_secret("GNANI_ACCESS_KEY")
 STT_API_URL = "https://asr.gnani.ai/recognize"
 TTS_API_URL = "https://tts.gnani.ai/synthesize"
 
-# Supported Indian languages
 LANGUAGE_MAP = {
+    "en-IN": "English",
     "kn-IN": "ಕನ್ನಡ (Kannada)",
     "hi-IN": "हिन्दी (Hindi)",
-    "en-IN": "English",
-    "ta-IN": "தமிழ் (Tamil)",
-    "te-IN": "తెలుగు (Telugu)",
-    "ml-IN": "മലയാളം (Malayalam)",
-    "mr-IN": "मराठी (Marathi)",
-    "bn-IN": "বাংলা (Bengali)",
-    "gu-IN": "ગુજરાતી (Gujarati)",
-    "pa-IN": "ਪੰਜਾਬੀ (Punjabi)",
-    "or-IN": "ଓଡ଼ಿଆ (Odia)",
 }
 
 # --------------------------------------------------
-# COMPREHENSIVE EMERGENCY KNOWLEDGE BASE
-# (Major & Minor Emergencies across India)
+# COMPREHENSIVE KNOWLEDGE BASE (Major & Minor Scenarios)
 # --------------------------------------------------
-EMERGENCY_KNOWLEDGE_BASE = {
+EMERGENCY_DATA = {
+    # MAJOR EMERGENCIES
     "earthquake": {
-        "en-IN": "Sahaya here: DROP, COVER, and HOLD ON. Get under a sturdy table, protect your head, and stay away from windows and power lines. Do not use elevators. Dial 112 once the shaking stops.",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ಭೂಕಂಪವಾದಾಗ ತಕ್ಷಣ ನೆಲಕ್ಕೆ ಬಗ್ಗಿ, ಗಟ್ಟಿಯಾದ ಮೇಜಿನ ಕೆಳಗೆ ಆಶ್ರಯ ಪಡೆಯಿರಿ (Drop, Cover, Hold On). ಕಿಟಕಿಗಳು ಮತ್ತು ವಿದ್ಯುತ್ ಕಂಬಗಳಿಂದ ದೂರವಿರಿ. ಲಿಫ್ಟ್ ಬಳಸಬೇಡಿ. 112 ಗೆ ಕರೆ ಮಾಡಿ.",
-        "hi-IN": "मैं सहाय हूँ: भूकंप के दौरान तुरंत नीचे झुकें, मजबूत मेज के नीचे सिर ढकें (Drop, Cover, Hold On)। खिड़कियों और बिजली के तारों से दूर रहें। लिफ्ट का उपयोग न करें। तुरंत 112 पर कॉल करें।",
-    },
-    "accident": {
-        "en-IN": "Sahaya here: Ensure your immediate safety before approaching the vehicle. Do not move an unconscious victim unless there is fire danger. Call 112 immediately and check breathing.",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ಮೊದಲು ನಿಮ್ಮ ಸುರಕ್ಷತೆಯನ್ನು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ. ಬೆಂಕಿಯ ಅಪಾಯವಿಲ್ಲದಿದ್ದರೆ ಗಾಯಾಳುವನ್ನು ಹೆಚ್ಚು ಚಲಿಸಬೇಡಿ. ತಕ್ಷಣ 112 ಗೆ ಕರೆ ಮಾಡಿ ಆಂಬ್ಯುಲೆನ್ಸ್ ಕರೆಯಿರಿ.",
-        "hi-IN": "मैं सहाय हूँ: पहले अपनी सुरक्षा देखें। अगर आग का खतरा न हो तो घायल व्यक्ति को हिलाएं नहीं। तुरंत 112 डायल करके एम्बुलेंस बुलाएं और सांस की जांच करें।",
+        "label": "Earthquake", "icon": "🫨",
+        "en-IN": "Sahaya here: DROP, COVER, and HOLD ON. Get under a sturdy table, protect your head, and stay away from glass and outer walls. Do not use elevators. Dial 112 once shaking stops.",
+        "kn-IN": "ನಾನು ಸಹಾಯ: ತಕ್ಷಣ ನೆಲಕ್ಕೆ ಬಗ್ಗಿ, ಗಟ್ಟಿಯಾದ ಮೇಜಿನ ಕೆಳಗೆ ಆಶ್ರಯ ಪಡೆಯಿರಿ. ಕಿಟಕಿಗಳು ಮತ್ತು ಗೋಡೆಗಳಿಂದ ದೂರವಿರಿ. ಲಿಫ್ಟ್ ಬಳಸಬೇಡಿ. ಕಂಪನ ನಿಂತ ಮೇಲೆ 112 ಗೆ ಕರೆ ಮಾಡಿ.",
+        "hi-IN": "मैं सहाय हूँ: तुरंत नीचे झुकें, मजबूत मेज के नीचे सिर ढकें। खिड़कियों और दीवारों से दूर रहें। लिफ्ट का उपयोग न करें। झटके रुकने पर 112 डायल करें।"
     },
     "heart_attack": {
-        "en-IN": "Sahaya here: Have the patient sit comfortably with back supported. Loosen tight clothing. If not allergic, give one 300mg soluble Aspirin. Call 112 immediately for an ambulance.",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ರೋಗಿಯನ್ನು ಆರಾಮವಾಗಿ ಕೂರಿಸಿ, ಬೆನ್ನಿಗೆ ಆಧಾರ ನೀಡಿ. ಬಿಗಿಯಾದ ಬಟ್ಟೆಯನ್ನು ಸಡಿಲಗೊಳಿಸಿ. ಅಲರ್ಜಿ ಇಲ್ಲದಿದ್ದರೆ ಆಸ್ಪಿರಿನ್ ಮಾತ್ರೆ ನೀಡಿ. ತಕ್ಷಣ 112 ಗೆ ಕರೆ ಮಾಡಿ ಆಸ್ಪತ್ರೆಗೆ ಸಾಗಿಸಿ.",
-        "hi-IN": "मैं सहाय हूँ: मरीज को आराम से बैठाएं और कपड़े ढीले करें। अगर एलर्जी न हो तो एक एस्पिरिन (Aspirin) चबाने को दें। बिना देर किए तुरंत 112 डायल करें।",
+        "label": "Cardiac Arrest", "icon": "💔",
+        "en-IN": "Sahaya here: Keep patient calm and seated with knees bent. Loosen tight clothing. If conscious and not allergic, give one 300mg Aspirin to chew. Call 112 immediately.",
+        "kn-IN": "ನಾನು ಸಹಾಯ: ರೋಗಿಯನ್ನು ಆರಾಮವಾಗಿ ಕುಳ್ಳಿರಿಸಿ. ಬಿಗಿಯಾದ ಬಟ್ಟೆ ಸಡಿಲಗೊಳಿಸಿ. ಅಲರ್ಜಿ ಇಲ್ಲದಿದ್ದರೆ 300mg ಆಸ್ಪಿರಿನ್ ಜಗಿದು ನುಂಗಲು ಕೊಡಿ. ತಕ್ಷಣ 112 ಗೆ ಕರೆ ಮಾಡಿ.",
+        "hi-IN": "मैं सहाय हूँ: मरीज को आराम से बैठाएं। कपड़े ढीले करें। एलर्जी न होने पर 300mg एस्पिरिन चबाने को दें। तुरंत 112 पर कॉल करें।"
     },
-    "stroke": {
-        "en-IN": "Sahaya here: Use FAST (Face drooping, Arm weakness, Speech slurred, Time to call 112). Keep the patient still, do not give anything to eat or drink, and rush to the hospital immediately.",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ಮುಖ ವಾಲಿದೆಯೇ, ಕೈಯಲ್ಲಿ ಶಕ್ತಿ ಕಡಿಮೆಯಾಗಿದೆಯೇ, ಮಾತು ತೊದಲುತ್ತಿದೆಯೇ ಗಮನಿಸಿ (FAST). ಏನನ್ನೂ ತಿನ್ನಲು ಅಥವಾ ಕುಡಿಯಲು ನೀಡಬೇಡಿ. ತಕ್ಷಣ 112 ಗೆ ಕರೆ ಮಾಡಿ ಆಸ್ಪತ್ರೆಗೆ ಕರೆದೊಯ್ಯಿರಿ.",
-        "hi-IN": "मैं सहाय हूँ: FAST नियम याद रखें—चेहरा लटकना, हाथ की कमजोरी, बोलने में परेशानी। मरीज को कुछ भी खाने-पीने न दें और तुरंत 112 पर कॉल करके अस्पताल ले जाएं।",
+    "accident": {
+        "label": "Road Accident", "icon": "🚗",
+        "en-IN": "Sahaya here: Ensure your own safety first. Do not move an unconscious victim unless there is imminent danger of fire or explosion. Check breathing and call 112 immediately.",
+        "kn-IN": "ನಾನು ಸಹಾಯ: ಮೊದಲು ನಿಮ್ಮ ಸುರಕ್ಷತೆ ಮುಖ್ಯ. ಬೆಂಕಿಯ ಅಪಾಯವಿದ್ದರೆ ಮಾತ್ರ ಪ್ರಜ್ಞಾಹೀನರನ್ನು ಸ್ಥಳಾಂತರಿಸಿ. ಉಸಿರಾಟ ಪರೀಕ್ಷಿಸಿ ತಕ್ಷಣ 112 ಗೆ ಕರೆ ಮಾಡಿ.",
+        "hi-IN": "मैं सहाय हूँ: पहले अपनी सुरक्षा देखें। आग का खतरा न होने पर घायल को न हिलाएं। सांस की जांच करें और तुरंत 112 डायल करें।"
     },
     "electric_shock": {
-        "en-IN": "Sahaya here: DO NOT touch the victim with bare hands. Turn off the main power switch immediately or use a dry wooden stick to separate them from the wire. Dial 112.",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ವ್ಯಕ್ತಿಯನ್ನು ಬರಿಗೈಯಿಂದ ಮುಟ್ಟಬೇಡಿ! ತಕ್ಷಣ ಮುಖ್ಯ ವಿದ್ಯುತ್ ಸ್ವಿಚ್ ಆಫ್ ಮಾಡಿ ಅಥವಾ ಒಣ ಮರದ ಕೋಲಿನಿಂದ ತಂತಿಯನ್ನು ಬೇರ್ಪಡಿಸಿ. ನಂತರ 112 ಗೆ ಕರೆ ಮಾಡಿ.",
-        "hi-IN": "मैं सहाय हूँ: पीड़ित को नंगे हाथों से न छुएं! तुरंत मेन स्विच बंद करें या सूखी लकड़ी की छड़ी से तार हटाएं। सांस की जांच करें और 112 पर कॉल करें।",
+        "label": "Electric Shock", "icon": "⚡",
+        "en-IN": "Sahaya here: DO NOT touch the victim with bare hands. Switch off the main power supply immediately or use a dry wooden object to push them away from the source. Dial 112.",
+        "kn-IN": "ನಾನು ಸಹಾಯ: ಬರಿಗೈಯಿಂದ ಮುಟ್ಟಬೇಡಿ! ಕೂಡಲೇ ಮುಖ್ಯ ವಿದ್ಯುತ್ ಸ್ವಿಚ್ ಆಫ್ ಮಾಡಿ ಅಥವಾ ಒಣ ಮರದ ಕೋಲಿನಿಂದ ವ್ಯಕ್ತಿಯನ್ನು ದೂರ ತಳ್ಳಿ. 112 ಗೆ ಕರೆ ಮಾಡಿ.",
+        "hi-IN": "मैं सहाय हूँ: पीड़ित को नंगे हाथों से न छुएं! तुरंत मेन स्विच बंद करें या सूखी लकड़ी की मदद से तार से अलग करें। 112 डायल करें।"
+    },
+    "stroke": {
+        "label": "Stroke (FAST)", "icon": "🧠",
+        "en-IN": "Sahaya here: Check F.A.S.T. (Facial drooping, Arm weakness, Speech difficulty, Time to call 112). Keep patient resting, do not give food or water, rush to hospital.",
+        "kn-IN": "ನಾನು ಸಹಾಯ: ಮುಖ ಕೋಣೆಯಾಗಿದೆಯೇ, ಕೈ ಬಲಹೀನವಾಗಿದೆಯೇ, ಮಾತು ತೊದಲುತ್ತಿದೆಯೇ ಗಮನಿಸಿ (FAST). ಏನನ್ನೂ ತಿನ್ನಲು ಕೊಡಬೇಡಿ, ತಕ್ಷಣ ಆಸ್ಪತ್ರೆಗೆ ತನ್ನಿ.",
+        "hi-IN": "मैं सहाय हूँ: FAST जांचें—चेहरा लटकना, हाथ में कमजोरी, बोलने में दिक्कत। कुछ भी खाने-पीने को न दें, तुरंत अस्पताल ले जाएं।"
+    },
+    
+    # MEDIUM / FIRST AID EMERGENCIES
+    "burn": {
+        "label": "Burns & Scalds", "icon": "🔥",
+        "en-IN": "Sahaya here: Cool the burn under clean running tap water for 15-20 minutes. Do not apply ice, butter, or ointments. Cover loosely with a sterile bandage.",
+        "kn-IN": "ನಾನು ಸಹಾಯ: ಸುಟ್ಟ ಗಾಯದ ಮೇಲೆ 15-20 ನಿಮಿಷ ಹರಿಯುವ ತಣ್ಣೀರು ಸುರಿಯಿರಿ. ಮಂಜುಗಡ್ಡೆ ಅಥವಾ ಎಣ್ಣೆ ಹಚ್ಚಬೇಡಿ. ಸ್ವಚ್ಛ ಬಟ್ಟೆಯಿಂದ ಸಡಿಲವಾಗಿ ಮುಚ್ಚಿ.",
+        "hi-IN": "मैं सहाय हूँ: जले हुए अंग पर 15-20 मिनट ठंडा पानी डालें। बर्फ या तेल न लगाएं। साफ पट्टी से ढीले ढंग से ढकें।"
     },
     "snake": {
-        "en-IN": "Sahaya here: Keep the victim calm and strictly still. Immobilize the limb and keep it below heart level. Do NOT cut, suck venom, or tie tight tourniquets. Reach a hospital immediately for Anti-Snake Venom.",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ವ್ಯಕ್ತಿಯನ್ನು ಚಲಿಸದಂತೆ ಶಾಂತರಾಗಿರಿಸಿ. ಕಚ್ಚಿದ ಭಾಗವನ್ನು ಹೃದಯದ ಮಟ್ಟಕ್ಕಿಂತ ಕೆಳಗೆ ಇರಿಸಿ. ಬ್ಲೇಡ್‌ನಿಂದ ಕೊಯ್ಯಬೇಡಿ, ವಿಷ ಹೀರುವ ಪ್ರಯತ್ನ ಮಾಡಬೇಡಿ. ತಕ್ಷಣ ಆಸ್ಪತ್ರೆಗೆ ಕೊಂಡೊಯ್ದು ASV ಚುಚ್ಚುಮದ್ದು ಕೊಡಿಸಿ.",
-        "hi-IN": "मैं सहाय हूँ: मरीज को शांत रखें और बिल्कुल हिलने न दें। काटे गए अंग को दिल के स्तर से नीचे रखें। चीरा या कसकर पट्टी न बांधें। तुरंत नजदीकी अस्पताल ले जाएं।",
-    },
-    "heatstroke": {
-        "en-IN": "Sahaya here: Move the person to a cool, shaded area. Sponge body with cool water and fan continuously. Offer sips of cool water or ORS if fully conscious. Seek medical help.",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ವ್ಯಕ್ತಿಯನ್ನು ತಂಪಾದ ನೆರಳಿನ ಜಾಗಕ್ಕೆ ಕರೆದೊಯ್ಯಿರಿ. ದೇಹದ ಮೇಲೆ ತಣ್ಣೀರು ಚಿಮುಕಿಸಿ ಗಾಳಿ ಹಾಕಿ. ಪ್ರಜ್ಞೆ ಇದ್ದರೆ ನೀರು ಅಥವಾ ಓಆರ್‌ಎಸ್ (ORS) ಕುಡಿಸಿ.",
-        "hi-IN": "मैं सहाय हूँ: व्यक्ति को तुरंत ठंडी या छांव वाली जगह ले जाएं। शरीर पर ठंडा पानी छिड़कें और पंखा करें। होश में होने पर ओआरएस (ORS) या पानी पिलाएं।",
-    },
-    "burn": {
-        "en-IN": "Sahaya here: Cool the burn under gentle running tap water for 10–20 minutes. Do not apply ice, butter, or toothpaste. Cover loosely with a clean, sterile cloth and see a doctor.",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ಸುಟ್ಟ ಜಾಗಕ್ಕೆ 10-20 ನಿಮಿಷಗಳ ಕಾಲ ನಲ್ಲಿಯ ತಣ್ಣೀರು ಸುರಿಯಿರಿ. ಮಂಜುಗಡ್ಡೆ, ಬೆಣ್ಣೆ ಅಥವಾ ಟೂತ್‌ಪೇಸ್ಟ್ ಹಚ್ಚಬೇಡಿ. ಸ್ವಚ್ಛವಾದ ಬಟ್ಟೆಯಿಂದ ಮುಚ್ಚಿ ಆಸ್ಪತ್ರೆಗೆ ತೆರಳಿ.",
-        "hi-IN": "मैं सहाय हूँ: जले हिस्से पर 10-20 मिनट तक सामान्य ठंडा पानी डालें। बर्फ, तेल या टूथपेस्ट न लगाएं। साफ कपड़े से ढकें और डॉक्टर को दिखाएं।",
+        "label": "Snake Bite", "icon": "🐍",
+        "en-IN": "Sahaya here: Keep victim strictly immobile and calm to prevent venom spread. Keep bitten limb below heart level. Do not cut or suction the wound. Seek hospital care immediately.",
+        "kn-IN": "ನಾನು ಸಹಾಯ: ವಿಷ ಹರಡದಂತೆ ವ್ಯಕ್ತಿಯನ್ನು ಕದಲದಂತೆ ಶಾಂತವಾಗಿರಿಸಿ. ಕಚ್ಚಿದ ಭಾಗವನ್ನು ಹೃದಯಕ್ಕಿಂತ ಕೆಳಗೆ ಇರಿಸಿ. ಹರಿಯಬೇಡಿ ಅಥವಾ ಕಡ್ಡಾಯವಾಗಿ ಕತ್ತರಿಸಬೇಡಿ.",
+        "hi-IN": "मैं सहाय हूँ: जहर फैलने से रोकने के लिए मरीज को हिलने न दें। घाव को दिल के स्तर से नीचे रखें। चीरा न लगाएं। तुरंत अस्पताल पहुंचें।"
     },
     "choking": {
-        "en-IN": "Sahaya here: If the person cannot breathe, give 5 firm blows between the shoulder blades with the heel of your hand, followed by 5 quick abdominal thrusts (Heimlich maneuver).",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ಉಸಿರಾಟ ನಿಂತಿದ್ದರೆ, ಬೆನ್ನಿನ ಮಧ್ಯದಲ್ಲಿ ಅಂಗೈಯಿಂದ 5 ಬಾರಿ ಬಲವಾಗಿ ತಟ್ಟಿ. ನಂತರ ಹೊಟ್ಟೆಯ ಮೇಲ್ಭಾಗವನ್ನು ಒಳಕ್ಕೆ ಮತ್ತು ಮೇಲಕ್ಕೆ ಒತ್ತಿ (ಹೀಮ್ಲಿಕ್ ವಿಧಾನ).",
-        "hi-IN": "मैं सहाय हूँ: अगर सांस रुक रही हो, तो पीठ पर 5 बार थपथपाएं, फिर पेट के ऊपरी हिस्से पर अंदर और ऊपर की ओर दबाव (हेमलिच तकनीक) डालें। तुरंत 112 डायल करें।",
+        "label": "Choking", "icon": "🛑",
+        "en-IN": "Sahaya here: Lean the person forward and give 5 sharp back blows between shoulder blades. If ineffective, perform 5 abdominal thrusts (Heimlich maneuver).",
+        "kn-IN": "ನಾನು ಸಹಾಯ: ವ್ಯಕ್ತಿಯನ್ನು ಮುಂದಕ್ಕೆ ಬಾಗಿಸಿ ಬೆನ್ನಿನ ಮಧ್ಯೆ 5 ಬಾರಿ ಜೋರಾಗಿ ತಟ್ಟಿ. ಪ್ರಯೋಜನವಾಗದಿದ್ದರೆ 5 ಬಾರಿ ಹೊಟ್ಟೆಯ ಮೇಲೆ ಒತ್ತಿ (ಹೀಮ್ಲಿಕ್ ವಿಧಾನ).",
+        "hi-IN": "मी सहाय हूँ: व्यक्ति को आगे झुकाकर पीठ पर 5 बार जोर से मारें। आराम न मिलने पर पेट पर 5 बार दबाव (हेमलिच) डालें।"
     },
     "fall": {
-        "en-IN": "Sahaya here: Check for consciousness and normal breathing. If you suspect a neck, back, or bone fracture, do not move the person. Keep them warm and call 112.",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ಪ್ರಜ್ಞೆ ಮತ್ತು ಉಸಿರಾಟವನ್ನು ಪರೀಕ್ಷಿಸಿ. ಕುತ್ತಿಗೆ ಅಥವಾ ಬೆನ್ನುಮೂಳೆಗೆ ಏಟಾಗಿದ್ದರೆ ವ್ಯಕ್ತಿಯನ್ನು ಅಲುಗಾಡಿಸಬೇಡಿ. ತಕ್ಷಣ 112 ಗೆ ಕರೆ ಮಾಡಿ.",
-        "hi-IN": "मैं सहाय हूँ: होश और सांस की जांच करें। गर्दन या रीढ़ की हड्डी में चोट हो तो मरीज को बिल्कुल न हिलाएं। तुरंत 112 पर संपर्क करें।",
+        "label": "Fracture / Severe Fall", "icon": "🤕",
+        "en-IN": "Sahaya here: Do not attempt to realign broken bones. Immobilize the injured area using a splint or folded cloth. If neck or spine injury is suspected, do not move them.",
+        "kn-IN": "ನಾನು ಸಹಾಯ: ಮುರಿದ ಮೂಳೆಗಳನ್ನು ಸರಿಪಡಿಸಲು ಪ್ರಯತ್ನಿಸಬೇಡಿ. ಬಟ್ಟೆ ಅಥವಾ ಹಲಗೆಯಿಂದ ಆಸರೆ ನೀಡಿ ಕದಲದಂತೆ ಮಾಡಿ. ಕುತ್ತಿಗೆ ಗಾಯವಿದ್ದರೆ ವ್ಯಕ್ತಿಯನ್ನು ಎತ್ತಬೇಡಿ.",
+        "hi-IN": "मैं सहाय हूँ: टूटी हड्डियों को खुद ठीक करने की कोशिश न करें। पट्टी या कपड़े से अंग को स्थिर करें। गर्दन में चोट हो तो मरीज को न हिलाएं।"
     },
+    "heatstroke": {
+        "label": "Heatstroke", "icon": "🥵",
+        "en-IN": "Sahaya here: Move victim to a cool, shaded place. Loosen clothing, sponge skin with cool water, and fan vigorously. Offer sips of water if fully conscious.",
+        "kn-IN": "ನಾನು ಸಹಾಯ: ವ್ಯಕ್ತಿಯನ್ನು ತಂಪಾದ ನೆರಳಿಗೆ ತನ್ನಿ. ಬಟ್ಟೆ ಸಡಿಲಗೊಳಿಸಿ, ಮೈಯನ್ನು ತಣ್ಣೀರಿನಿಂದ ಒರೆಸಿ ಗಾಳಿ ಹಾಕಿ. ಪ್ರಜ್ಞೆ ಇದ್ದರೆ ನೀರು ಕುಡಿಸಿ.",
+        "hi-IN": "मैं सहाय हूँ: मरीज को ठंडी छांव में ले जाएं। कपड़े ढीले करें, ठंडे पानी से शरीर पोंछें और पंखा करें। होश में होने पर पानी पिलाएं।"
+    },
+    
+    # MINOR / DAILY INJURIES
     "cut": {
-        "en-IN": "Sahaya here: Apply direct, firm pressure on the wound with a clean cloth or bandage to stop bleeding. Elevate the injured area above the heart if possible. Wash gently and bandage.",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ರಕ್ತಸ್ರಾವ ನಿಲ್ಲಿಸಲು ಗಾಯದ ಮೇಲೆ ಸ್ವಚ್ಛವಾದ ಬಟ್ಟೆಯಿಂದ ಗಟ್ಟಿಯಾಗಿ ಒತ್ತಿ ಹಿಡಿಯಿರಿ. ಸಾಧ್ಯವಾದರೆ ಗಾಯಗೊಂಡ ಭಾಗವನ್ನು ಮೇಲಕ್ಕೆತ್ತಿ. ರಕ್ತ ನಿಲ್ಲದಿದ್ದರೆ ಆಸ್ಪತ್ರೆಗೆ ತೆರಳಿ.",
-        "hi-IN": "मैं सहाय हूँ: खून बहना रोकने के लिए साफ कपड़े से घाव को कसकर दबाएं। चोट वाले हिस्से को दिल के स्तर से ऊपर उठाएं। खून न रुके तो डॉक्टर को दिखाएं।",
+        "label": "Heavy Bleeding", "icon": "✂️",
+        "en-IN": "Sahaya here: Apply direct, continuous pressure on the wound using a clean cloth or sterile gauze. Elevate the bleeding limb above the heart level until bleeding stops.",
+        "kn-IN": "ನಾನು ಸಹಾಯ: ಸ್ವಚ್ಛವಾದ ಬಟ್ಟೆಯಿಂದ ಗಾಯದ ಮೇಲೆ ನೇರವಾಗಿ ಒತ್ತಿ ಹಿಡಿಯಿರಿ. ರಕ್ತ ನಿಲ್ಲುವವರೆಗೆ ಗಾಯಗೊಂಡ ಭಾಗವನ್ನು ಮೇಲಕ್ಕೆತ್ತಿ ಹಿಡಿದುಕೊಳ್ಳಿ.",
+        "hi-IN": "मैं सहाय हूँ: साफ कपड़े से घाव को लगातार जोर से दबाकर रखें। खून बहना बंद होने तक चोट वाले अंग को दिल के स्तर से ऊपर उठाएं।"
     },
     "nosebleed": {
-        "en-IN": "Sahaya here: Sit upright and lean forward slightly—do NOT lean back. Pinch the soft part of the nose firmly for 10 minutes and breathe through the mouth.",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ನೆಟ್ಟಗೆ ಕುಳಿತು ಸ್ವಲ್ಪ ಮುಂದಕ್ಕೆ ಬಗ್ಗಿ—ತಲೆಯನ್ನು ಹಿಂದಕ್ಕೆ ಬಾಗಿಸಬೇಡಿ. ಮೂಗಿನ ಮೆದುವಾದ ಮುಂಭಾಗವನ್ನು 10 ನಿಮಿಷ ಗಟ್ಟಿಯಾಗಿ ಒತ್ತಿ ಹಿಡಿಯಿರಿ ಮತ್ತು ಬಾಯಿಯಿಂದ ಉಸಿರಾಡಿ.",
-        "hi-IN": "मैं सहाय हूँ: सीधे बैठें और आगे की ओर थोड़ा झुकें (सिर पीछे न करें)। नाक के दोनों नथुनों को 10 मिनट तक दबाकर रखें और मुंह से सांस लें।",
+        "label": "Nosebleed", "icon": "🩸",
+        "en-IN": "Sahaya here: Sit upright and lean slightly forward. Pinch the soft lower part of the nose firmly against the face for 10 continuous minutes. Breathe through your mouth.",
+        "kn-IN": "ನಾನು ಸಹಾಯ: ನೆಟ್ಟಗೆ ಕುಳಿತು ಸ್ವಲ್ಪ ಮುಂದಕ್ಕೆ ಬಾಗಿ. ಮೂಗಿನ ಮೆದು ಭಾಗವನ್ನು 10 ನಿಮಿಷಗಳ ಕಾಲ ಬಿಗಿಯಾಗಿ ಒತ್ತಿ ಹಿಡಿಯಿರಿ. ಬಾಯಿಯ ಮೂಲಕ ಉಸಿರಾಡಿ.",
+        "hi-IN": "मैं सहाय हूँ: सीधे बैठें और थोड़ा आगे झुकें। नाक के नरम हिस्से को लगातार 10 मिनट तक दबाकर रखें। मुंह से सांस लें।"
     },
     "sprain": {
-        "en-IN": "Sahaya here: Follow R.I.C.E. (Rest the limb, Ice wrapped in cloth for 15 minutes, Compress gently with an elastic bandage, Elevate the limb).",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ಊತ ಮತ್ತು ನೋವಿಗೆ ವಿಶ್ರಾಂತಿ ನೀಡಿ, ಬಟ್ಟೆಯಲ್ಲಿ ಸುತ್ತಿದ ಮಂಜುಗಡ್ಡೆಯಿಂದ 15 ನಿಮಿಷ ಶಾಖ ಕೊಡಿ, ಕ್ರೇಪ್ ಬ್ಯಾಂಡೇಜ್ ಕಟ್ಟಿ, ಕಾಲನ್ನು ಎತ್ತರದಲ್ಲಿಡಿ.",
-        "hi-IN": "मैं सहाय हूँ: R.I.C.E नियम अपनाएं—आराम करें, कपड़े में लपेटकर बर्फ लगाएं, पट्टी बांधें और अंग को ऊंचाई पर रखें।",
-    },
-    "crime": {
-        "en-IN": "Sahaya here: Prioritize your physical safety first. Move to a crowded public area. Dial 112 immediately to report snatching, robbery, or harassment to the police.",
-        "kn-IN": "ನಾನು ಸಹಾಯ: ಮೊದಲು ನಿಮ್ಮ ಸುರಕ್ಷತೆಯನ್ನು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ. ಜನರಿರುವ ಸ್ಥಳಕ್ಕೆ ತೆರಳಿ. ಸರಗಳ್ಳತನ ಅಥವಾ ಕಿರುಕುಳದ ವಿರುದ್ಧ ತಕ್ಷಣವೇ 112 ಗೆ ಕರೆ ಮಾಡಿ ಪೊಲೀಸರಿಗೆ ಮಾಹಿತಿ ನೀಡಿ.",
-        "hi-IN": "मैं सहाय हूँ: पहले अपनी सुरक्षा सुनिश्चित करें और भीड़ वाली जगह जाएं। छिनैती या चोरी की सूचना देने के लिए तुरंत 112 पर पुलिस को कॉल करें।",
-    },
-    "default": {
-        "en-IN": "I am Sahaya, your emergency assistant. Stay calm. Please tell me your symptoms or situation (e.g., burn, snake bite, fall, accident, bleeding). For danger, call 112.",
-        "kn-IN": "ನಾನು ನಿಮ್ಮ ತುರ್ತು ಸಹಾಯಕಿ ಸಹಾಯ. ಶಾಂತರಾಗಿರಿ. ನಿಮ್ಮ ತುರ್ತು ಪರಿಸ್ಥಿತಿ ಏನು (ಉದಾ: ಸುಟ್ಟ ಗಾಯ, ಹಾವು ಕಡಿತ, ಅಪಘಾತ, ರಕ್ತಸ್ರಾವ)? ತಕ್ಷಣದ ಅಪಾಯಕ್ಕೆ 112 ಗೆ ಕರೆ ಮಾಡಿ.",
-        "hi-IN": "मैं आपकी आपातकालीन सहायक सहाय हूँ। शांत रहें। कृपया अपनी समस्या बताएं (जैसे: चोट, सांप का काटना, गिरना, दुर्घटना, जलना)। तुरंत सहायता के लिए 112 डायल करें।",
-    },
+        "label": "Sprain / Strain", "icon": "🦴",
+        "en-IN": "Sahaya here: Follow R.I.C.E. protocol—Rest the injured limb, apply an ice pack wrapped in a cloth for 15 minutes, apply a supportive bandage, and elevate the area.",
+        "kn-IN": "ನಾನು ಸಹಾಯ: R.I.C.E. ನಿಯಮ ಪಾಲಿಸಿ—ಗಾಯಕ್ಕೆ ವಿಶ್ರಾಂತಿ ನೀಡಿ, 15 ನಿಮಿಷ ಮಂಜುಗಡ್ಡೆ ಇಡಿ, ಬ್ಯಾಂಡೇಜ್ ಕಟ್ಟಿ, ಗಾಯಗೊಂಡ ಭಾಗವನ್ನು ಎತ್ತರದಲ್ಲಿಡಿ.",
+        "hi-IN": "मैं सहाय हूँ: R.I.C.E. नियम अपनाएं—आराम दें, 15 मिनट कपड़े में लपेटी बर्फ लगाएं, पट्टी बांधें और अंग को ऊंचाई पर रखें।"
+    }
 }
 
 # --------------------------------------------------
-# INTENT MATCHING ENGINE
+# SESSION STATE MANAGEMENT
+# --------------------------------------------------
+if 'selected_emergency' not in st.session_state:
+    st.session_state.selected_emergency = None
+if 'custom_input' not in st.session_state:
+    st.session_state.custom_input = ""
+
+def set_emergency(key):
+    st.session_state.selected_emergency = key
+
+# --------------------------------------------------
+# INTERFACE LAYOUT: PROFESSIONAL BUTTON GRID
+# --------------------------------------------------
+selected_lang = st.selectbox(
+    "🌐 Select Language / ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    options=list(LANGUAGE_MAP.keys()),
+    format_func=lambda x: LANGUAGE_MAP[x],
+)
+
+enable_voice = st.checkbox("🔊 Enable spoken audio response", value=True)
+
+st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
+st.markdown("<h3 class='emergency-title'>🚨 Emergency Menu</h3>", unsafe_allow_html=True)
+
+# 3-Column Responsive Grid Layout
+cols = st.columns(3)
+keys = list(EMERGENCY_DATA.keys())
+
+for idx, key in enumerate(keys):
+    col = cols[idx % 3]
+    data = EMERGENCY_DATA[key]
+    button_label = f"{data['icon']}\n{data['label']}"
+    
+    col.button(
+        button_label,
+        key=f"btn_{key}",
+        on_click=set_emergency,
+        args=(key,)
+    )
+
+st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
+
+# --------------------------------------------------
+# VOICE INPUT MODULE (Fallback / Alternate Input)
+# --------------------------------------------------
+st.markdown("### 🎙️ Or Speak Your Emergency")
+st.write("Hold the button, describe your situation clearly, and release:")
+
+audio = mic_recorder(
+    start_prompt="🎤 Hold to Record Emergency",
+    stop_prompt="⏹️ Processing Audio...",
+    key="app_microphone",
+)
+
+if audio and audio.get("bytes"):
+    with st.spinner("Analyzing emergency audio..."):
+        transcript = transcribe_audio(audio["bytes"], selected_lang)
+        st.session_state.custom_input = transcript
+        # Automatically update selection based on speech
+        st.session_state.selected_emergency = classify_emergency(transcript)
+
+# --------------------------------------------------
+# DYNAMIC GUIDANCE DISPLAY ENGINE
+# --------------------------------------------------
+if st.session_state.selected_emergency:
+    st.markdown("<div class='custom-divider'></div>", unsafe_allow_html=True)
+    sc_key = st.session_state.selected_emergency
+    scenario_info = EMERGENCY_DATA.get(sc_key, EMERGENCY_DATA["earthquake"])
+    
+    st.subheader(f"📋 Action Plan: {scenario_info['label']}")
+    
+    # Retrieve localized guidance
+    guidance_text = scenario_info.get(selected_lang, scenario_info["en-IN"])
+    
+    # High-visibility output box
+    st.error(guidance_text)
+    
+    if enable_voice:
+        with st.spinner("Synthesizing audio instructions..."):
+            audio_out = speak_text(guidance_text, selected_lang)
+            if audio_out:
+                st.audio(audio_out, format="audio/wav")
+
+# --------------------------------------------------
+# CORE LOGIC & BACKEND SERVICES
 # --------------------------------------------------
 def classify_emergency(text: str) -> str:
-    """Classify user speech into an emergency scenario across multiple languages."""
+    """Keyword intent matching engine across multiple languages."""
     query = text.lower()
-    
     keywords = {
         "earthquake": ["earthquake", "quake", "tremor", "ಭೂಕಂಪ", "ಭೂಮಿ ಕಂಪಿಸಿದ", "भूकंप", "झटका"],
         "heart_attack": ["heart attack", "chest pain", "cardiac", "ಎದೆ ನೋವು", "ಹೃದಯಾಘಾತ", "हार्ट अटैक", "सीने में दर्द"],
-        "stroke": ["stroke", "paralysis", "face drooping", "ಪಾರ್ಶ್ವವಾಯು", "ಲಕ್ವಾ", "लकवा", "स्ट्रोक"],
+        "accident": ["accident", "collision", "crash", "hit", "ಅಪಘಾತ", "ಡಿಕ್ಕಿ", "ದುರ್ಘಟನೆ", "एक्सीडेंट", "दुर्घटना", "टक्कर"],
         "electric_shock": ["shock", "current", "electrocution", "ವಿದ್ಯುತ್", "ಕರೆಂಟ್", "बिजली", "करंट"],
-        "accident": ["accident", "collision", "vehicle crash", "hit", "ಅಪಘಾತ", "ಡಿಕ್ಕಿ", "ದುರ್ಘಟನೆ", "एक्सीडेंट", "दुर्घटना", "टक्कर"],
+        "stroke": ["stroke", "paralysis", "face drooping", "ಪಾರ್ಶ್ವವಾಯು", "ಲಕ್ವಾ", "लकवा", "स्ट्रोक"],
         "burn": ["burn", "fire", "scald", "acid", "ಸುಟ್ಟ", "ಸುಟ್ಟಿದೆ", "ಬೆಂಕಿ", "जल", "आग", "छाले"],
         "snake": ["snake", "bite", "venom", "ಹಾವು", "ಕಚ್ಚಿದೆ", "ವಿಷ", "ಸಾಪ್", "सांप", "काट", "डस"],
-        "heatstroke": ["heat stroke", "sunstroke", "dehydration", "ಬಿಸಿಲು", "ತಾಪ", "लू", "गर्मी"],
         "choking": ["chok", "throat", "swallow", "breath", "ಉಸಿರುಗಟ್ಟ", "ಗಂಟಲು", "दम", "सांस रुक"],
         "fall": ["fall", "fracture", "fell", "floor", "ಬಿದ್ದ", "ಮೂಳೆ ಮುರಿತ", "ಮಹಡಿ", "गिर", "हड्डी", "मंजिल"],
+        "heatstroke": ["heat stroke", "sunstroke", "dehydration", "ಬಿಸಿಲು", "ತಾಪ", "लू", "गर्मी"],
         "cut": ["cut", "bleeding", "wound", "blood", "ರಕ್ತ", "ಗಾಯ", "ಕಟ್", "खून", "घाव", "कट"],
         "nosebleed": ["nose bleed", "epistaxis", "ಮೂಗಿನಲ್ಲಿ ರಕ್ತ", "नाक से खून", "नकसीर"],
         "sprain": ["sprain", "twisted", "swelling", "ಉಳುಕು", "ಊತ", "मोच", "सूजन"],
-        "crime": ["snatch", "stole", "rob", "theft", "chain", "ಗಳ್ಳತನ", "ಕಸಿದು", "छीना", "चोरी", "लूट"],
     }
-    
     for category, terms in keywords.items():
         if any(term in query for term in terms):
             return category
-            
-    return "default"
+    return "earthquake" # Default fallback
 
-def get_sahaya_response(text: str, lang: str) -> str:
-    category = classify_emergency(text)
-    entry = EMERGENCY_KNOWLEDGE_BASE.get(category, EMERGENCY_KNOWLEDGE_BASE["default"])
-    return entry.get(lang, entry.get("en-IN", entry["en-IN"]))
-
-# --------------------------------------------------
-# GNANI.AI ASR & TTS SERVICES
-# --------------------------------------------------
 def transcribe_audio(audio_bytes: bytes, lang: str) -> str:
+    """Send audio bytes to Gnani.ai ASR service."""
     if not GNANI_TOKEN or not GNANI_ACCESS_KEY:
-        return "Simulated transcription: Emergency detected (Add GNANI_TOKEN and GNANI_ACCESS_KEY in Secrets for live ASR)."
-    
-    headers = {
-        "token": GNANI_TOKEN,
-        "accesskey": GNANI_ACCESS_KEY,
-        "lang": lang,
-    }
+        return "Simulated speech detected. (Add API keys to enable live ASR)."
+    headers = {"token": GNANI_TOKEN, "accesskey": GNANI_ACCESS_KEY, "lang": lang}
     files = {"audio": ("audio.wav", io.BytesIO(audio_bytes), "audio/wav")}
     try:
         response = requests.post(STT_API_URL, headers=headers, files=files, timeout=15)
         if response.status_code == 200:
             data = response.json()
-            return data.get("transcript", data.get("result", str(data)))
-    except Exception as err:
-        return f"Transcription error: {str(err)}"
-    return "Could not transcribe audio. Please speak clearly into the mic."
+            return data.get("transcript", data.get("result", "Emergency detected"))
+    except Exception:
+        pass
+    return "Emergency detected"
 
 def speak_text(text: str, lang: str):
+    """Convert text instructions to speech using Gnani.ai TTS service."""
     if not GNANI_TOKEN or not GNANI_ACCESS_KEY:
         return None
-        
-    headers = {
-        "token": GNANI_TOKEN,
-        "accesskey": GNANI_ACCESS_KEY,
-        "lang": lang,
-        "Content-Type": "application/json",
-    }
+    headers = {"token": GNANI_TOKEN, "accesskey": GNANI_ACCESS_KEY, "lang": lang, "Content-Type": "application/json"}
     payload = {
         "input": {"text": text},
         "voice": {"languageCode": lang, "ssmlGender": "FEMALE"},
@@ -218,42 +326,3 @@ def speak_text(text: str, lang: str):
     except Exception:
         pass
     return None
-
-# --------------------------------------------------
-# STREAMLIT USER INTERFACE
-# --------------------------------------------------
-selected_lang = st.selectbox(
-    "Choose Language / ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
-    options=list(LANGUAGE_MAP.keys()),
-    format_func=lambda x: LANGUAGE_MAP[x],
-)
-
-enable_voice = st.checkbox("Enable spoken responses from Sahaya", value=True)
-
-st.markdown("### 🎙️ Speak to Sahaya")
-st.write("Click the mic icon, describe your emergency, and click stop:")
-
-audio = mic_recorder(
-    start_prompt="🎤 Start recording",
-    stop_prompt="⏹️ Stop recording",
-    key="sahaya_recorder",
-)
-
-if audio and audio.get("bytes"):
-    st.audio(audio["bytes"], format="audio/wav")
-    
-    if st.button("Get Sahaya's Emergency Assistance", type="primary"):
-        with st.spinner("Sahaya is analyzing your emergency..."):
-            transcript = transcribe_audio(audio["bytes"], selected_lang)
-            st.subheader("📝 Recognized Speech:")
-            st.info(transcript)
-            
-            response = get_sahaya_response(transcript, selected_lang)
-            st.subheader("🤖 Sahaya's Guidance:")
-            st.success(response)
-            
-            if enable_voice:
-                with st.spinner("Sahaya is preparing voice output..."):
-                    audio_out = speak_text(response, selected_lang)
-                    if audio_out:
-                        st.audio(audio_out, format="audio/wav")
