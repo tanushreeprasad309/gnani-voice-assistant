@@ -5,312 +5,300 @@ import wave
 import numpy as np
 import requests
 import scipy.io.wavfile as wavfile
-import sounddevice as sd
+import streamlit as st
+from streamlit_mic_recorder import mic_recorder
 
-# ==============================================================================
+# ==========================================
 # CONFIGURATION & GNANI.AI CREDENTIALS
-# ==============================================================================
+# ==========================================
 GNANI_TOKEN = os.getenv("GNANI_TOKEN", "YOUR_GNANI_TOKEN_HERE")
 GNANI_ACCESS_KEY = os.getenv("GNANI_ACCESS_KEY", "YOUR_GNANI_ACCESS_KEY_HERE")
+GNANI_API_URL = "https://asr.gnani.ai/asr"
 
-# Gnani.ai Endpoints
-STT_API_URL = "https://asr.gnani.ai/v1/recognize"
-TTS_API_URL = "https://tts.gnani.ai/v1/synthesize"
-TRANSLATE_API_URL = "https://translate.gnani.ai/v1/translate"
+# ==========================================
+# PAGE CONFIGURATION (Professional App UI)
+# ==========================================
+st.set_page_config(
+    page_title="Emergency Indic Voice Assistant",
+    page_icon="🚨",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
-# Supported Indian Language Codes
-SUPPORTED_LANGUAGES = {
-    "hi": "Hindi",
-    "kn": "Kannada",
-    "te": "Telugu",
-    "ta": "Tamil",
-    "mr": "Marathi",
-    "bn": "Bengali",
-    "gu": "Gujarati",
-    "ml": "Malayalam",
-    "pa": "Punjabi",
-    "or": "Odia",
+# ==========================================
+# CUSTOM CSS STYLING (Native Mobile App Look)
+# ==========================================
+st.markdown("""
+<style>
+    .stApp {
+        background-color: #0e1117;
+        color: #ffffff;
+    }
+    .app-header {
+        background: linear-gradient(135deg, #d32f2f, #b71c1c);
+        padding: 1.5rem;
+        border-radius: 16px;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4);
+    }
+    .app-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: white;
+    }
+    .app-header p {
+        margin: 0.4rem 0 0 0;
+        font-size: 0.95rem;
+        color: #ffcdd2;
+    }
+    .emergency-card {
+        background-color: #1e222b;
+        border: 1px solid #2e3440;
+        border-radius: 14px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        transition: transform 0.2s, border-color 0.2s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    .emergency-card:hover {
+        border-color: #ef5350;
+    }
+    .card-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
+        color: #ffffff;
+    }
+    .card-number {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #ff5252;
+    }
+    .status-box {
+        background-color: #161b22;
+        border-left: 4px solid #58a6ff;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# 11-LANGUAGE INDIC & CODE-MIXED FRAMEWORK
+# ==========================================
+LANGUAGES = {
+    "Kannada (ಕನ್ನಡ / Kanglish)": {"code": "kn_IN", "label": "ಕನ್ನಡ"},
+    "Hindi (हिन्दी / Hinglish)": {"code": "hi_IN", "label": "हिन्दी"},
+    "English (India)": {"code": "en_IN", "label": "English"},
+    "Tamil (தமிழ் / Tanglish)": {"code": "ta_IN", "label": "தமிழ்"},
+    "Telugu (తెలుగు / Tenglish)": {"code": "te_IN", "label": "తెలుగు"},
+    "Malayalam (മലയാളം / Manglish)": {"code": "ml_IN", "label": "മലയാളം"},
+    "Marathi (मराठी)": {"code": "mr_IN", "label": "मराठी"},
+    "Bengali (বাংলা)": {"code": "bn_IN", "label": "বাংলা"},
+    "Gujarati (ગુજરાતી)": {"code": "gu_IN", "label": "ગુજરાતી"},
+    "Punjabi (ਪੰਜਾਬੀ)": {"code": "pa_IN", "label": "ਪੰਜਾਬੀ"},
+    "Odia (ଓଡ଼ିଆ)": {"code": "or_IN", "label": "ଓଡ଼ିଆ"}
 }
 
-# ==============================================================================
-# FIRST AID & EMERGENCY PROTOCOLS
-# ==============================================================================
-FIRST_AID_GUIDANCE = {
-    "burn": {
+EMERGENCY_SERVICES = {
+    "ambulance": {
+        "title": "🚑 Medical & Ambulance",
+        "number": "108",
+        "desc": "Critical medical emergency, accident, or hospital transport.",
         "keywords": [
-            "burn",
-            "fire",
-            "jal gaya",
-            "bentu",
-            "thee",
-            "aag",
-            "kalithu",
-            "sutta",
-        ],
-        "guidance": (
-            "Cool the burn immediately with cool running water for at least 10 to 20 minutes. "
-            "Do not apply ice, toothpaste, or oil. Cover loosely with a clean, dry cloth."
-        ),
+            "ambulance", "medical", "hospital", "doctor", "accident", "blood", "heart", "injury", "pain",
+            "ಆಂಬ್ಯುಲೆನ್ಸ್", "ಆಸ್ಪತ್ರೆ", "ಡಾಕ್ಟರ್", "ಅಪಘಾತ", "एम्बुलेंस", "अस्पताल", "डॉक्टर",
+            "ஆம்புலன்ஸ்", "மருத்துவமனை", "అంబులెన్స్", "ఆసుపత్రి", "ആംബുലൻസ്"
+        ]
     },
-    "snakebite": {
+    "police": {
+        "title": "🚓 Police Control Room",
+        "number": "112 / 100",
+        "desc": "Crime, theft, personal safety threat, or law enforcement.",
         "keywords": [
-            "snake",
-            "saap",
-            "haavu",
-            "paambu",
-            "sarpa",
-            "bite",
-            "katta",
-            "kadithu",
-        ],
-        "guidance": (
-            "Keep the victim calm and still to slow venom spread. Immobilize the bitten limb below heart level. "
-            "Do not cut the wound, do not try to suck venom, and do not tie a tight tourniquet. Rush to the nearest hospital."
-        ),
+            "police", "theft", "crime", "robbery", "danger", "attack", "help", "unsafe", "stolen",
+            "ಪೊಲೀಸ್", "ಕಳ್ಳತನ", "ಸಹಾಯ", "पुलिस", "चोरी", "बचाओ",
+            "போலீஸ்", "காவல்துறை", "పోలీస్", "പോലീസ്"
+        ]
     },
-    "labor": {
+    "fire": {
+        "title": "🚒 Fire & Rescue Services",
+        "number": "101",
+        "desc": "Fire outbreak, gas leak, building collapse, or rescue.",
         "keywords": [
-            "delivery",
-            "labor",
-            "labour",
-            "prasava",
-            "janana",
-            "baccha",
-            "baby coming",
-            "contractions",
-        ],
-        "guidance": (
-            "Have the mother lie on a clean surface with knees bent. Support the baby's head as it emerges without pulling. "
-            "Clear fluid from baby's mouth and nose, dry immediately, keep warm against mother's chest, and do not cut the cord."
-        ),
+            "fire", "smoke", "burn", "gas", "cylinder", "blast", "rescue",
+            "ಬೆಂಕಿ", "ಅಗ್ನಿಶಾಮಕ", "आग", "फायर", "தீ", "फायर ब्रिगेड", "अग्निशामक", "मदद"
+        ]
     },
-    "fall": {
+    "women": {
+        "title": "🛡️ Women & Child Helpline",
+        "number": "1091 / 181",
+        "desc": "Immediate assistance for women and children in distress.",
         "keywords": [
-            "fall",
-            "gir gaya",
-            "biddanu",
-            "vilunthu",
-            "height",
-            "building",
-            "scaffold",
-            "fracture",
-            "unconscious",
-        ],
-        "guidance": (
-            "Do not move the injured person, especially the neck or back, unless there is immediate danger. "
-            "Check breathing, apply gentle direct pressure to heavy bleeding without moving broken bones, and call an ambulance."
-        ),
+            "women", "girl", "harassment", "stalking", "domestic", "child", "safety",
+            "ಮಹಿಳಾ", "ಮಕ್ಕಳ", "महिला", "सुरक्षा", "பெண்கள்", "महिला हेल्पलाइन"
+        ]
     },
+    "cyber": {
+        "title": "💻 Cyber Crime & Fraud",
+        "number": "1930",
+        "desc": "UPI fraud, banking scam, OTP theft, or online harassment.",
+        "keywords": [
+            "cyber", "fraud", "scam", "money", "upi", "bank", "hacked", "otp",
+            "ಸೈಬರ್", "ವಂಚನೆ", "साइबर", "धोखाधड़ी", "बैंक"
+        ]
+    },
+    "disaster": {
+        "title": "🌊 Disaster Management (NDRF)",
+        "number": "1078",
+        "desc": "Flood, earthquake, cyclone, landslide, or severe weather.",
+        "keywords": [
+            "flood", "earthquake", "rain", "storm", "landslide", "disaster", "cyclone",
+            "ಪ್ರವಾಹ", "ಭೂಕಂಪ", "बाढ़", "भूकंप", "आपदा"
+        ]
+    }
 }
 
-# Assault / High-threat distress triggers
-DISTRESS_KEYWORDS = [
-    "bachao",
-    "save me",
-    "help",
-    "attack",
-    "hamla",
-    "maar rahe hain",
-    "threat",
-    "danger",
-    "police",
-    "assault",
-    "kaapadi",
-]
+# ==========================================
+# AUDIO PROCESSING & SPEECH-TO-TEXT
+# ==========================================
+def transcribe_audio(audio_bytes, lang_code):
+    """Sends recorded audio bytes to Gnani.ai ASR API with fallback handling."""
+    if not audio_bytes:
+        return ""
 
+    # If API credentials are valid, call Gnani.ai API
+    if GNANI_TOKEN != "YOUR_GNANI_TOKEN_HERE" and GNANI_ACCESS_KEY != "YOUR_GNANI_ACCESS_KEY_HERE":
+        try:
+            headers = {
+                "token": GNANI_TOKEN,
+                "accesskey": GNANI_ACCESS_KEY,
+                "lang": lang_code,
+                "audioformat": "wav"
+            }
+            files = {"audio_file": ("voice.wav", io.BytesIO(audio_bytes), "audio/wav")}
+            response = requests.post(GNANI_API_URL, headers=headers, files=files, timeout=15)
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("transcript", "")
+        except Exception as e:
+            st.warning(f"API Connection Notice: Switching to fallback mode ({e})")
 
-# ==============================================================================
-# AUDIO RECORDING UTILITIES
-# ==============================================================================
-def record_audio(duration: int = 5, sample_rate: int = 16000) -> bytes:
-    """Records audio from the default microphone and returns WAV bytes."""
-    print(f"\n[Microphone] Recording for {duration} seconds... Speak now.")
-    audio_data = sd.rec(
-        int(duration * sample_rate),
-        samplerate=sample_rate,
-        channels=1,
-        dtype=np.int16,
-    )
-    sd.wait()
-    print("[Microphone] Recording finished.")
-
-    byte_io = io.BytesIO()
-    wavfile.write(byte_io, sample_rate, audio_data)
-    return byte_io.getvalue()
-
-
-# ==============================================================================
-# GNANI.AI API SERVICES
-# ==============================================================================
-def gnani_stt(audio_bytes: bytes, lang_code: str = "hi") -> str:
-    """Converts audio speech to text using Gnani.ai ASR."""
-    headers = {"token": GNANI_TOKEN, "access_key": GNANI_ACCESS_KEY}
-    files = {"audio": ("input.wav", audio_bytes, "audio/wav")}
-    data = {"lang": lang_code, "encoding": "wav"}
-
-    try:
-        response = requests.post(
-            STT_API_URL, headers=headers, files=files, data=data, timeout=15
-        )
-        if response.status_code == 200:
-            result = response.json()
-            return result.get("transcript", "").strip()
-        else:
-            print(f"[STT Error] Status {response.status_code}: {response.text}")
-    except Exception as e:
-        print(f"[STT Exception] {e}")
-    return ""
-
-
-def gnani_tts(text: str, lang_code: str = "hi") -> None:
-    """Converts text to speech using Gnani.ai TTS and plays it directly."""
-    headers = {
-        "token": GNANI_TOKEN,
-        "access_key": GNANI_ACCESS_KEY,
-        "Content-Type": "application/json",
-    }
-    payload = {"text": text, "lang": lang_code, "voice": "female"}
-
-    try:
-        response = requests.post(
-            TTS_API_URL, headers=headers, json=payload, timeout=15
-        )
-        if response.status_code == 200:
-            audio_bytes = response.content
-            byte_io = io.BytesIO(audio_bytes)
-            with wave.open(byte_io, "rb") as wf:
-                sample_rate = wf.getframerate()
-                frames = wf.readframes(wf.getnframes())
-                audio_array = np.frombuffer(frames, dtype=np.int16)
-                sd.play(audio_array, samplerate=sample_rate)
-                sd.wait()
-        else:
-            print(f"[TTS Error] Status {response.status_code}: {response.text}")
-    except Exception as e:
-        print(f"[TTS Exception] {e}")
-
-
-def gnani_dynamic_translate(
-    text: str, source_lang: str, target_lang: str = "en"
-) -> str:
-    """Translates text between Indic languages and English using Gnani.ai."""
-    headers = {
-        "token": GNANI_TOKEN,
-        "access_key": GNANI_ACCESS_KEY,
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "text": text,
-        "source_lang": source_lang,
-        "target_lang": target_lang,
-    }
-
-    try:
-        response = requests.post(
-            TRANSLATE_API_URL, headers=headers, json=payload, timeout=15
-        )
-        if response.status_code == 200:
-            res_data = response.json()
-            return res_data.get("translated_text", text)
-        else:
-            print(
-                f"[Translation Error] Status {response.status_code}: {response.text}"
-            )
-    except Exception as e:
-        print(f"[Translation Exception] {e}")
-    return text
-
-
-# ==============================================================================
-# EMERGENCY LOGIC & DISPATCH
-# ==============================================================================
-def trigger_distress_alarm(detected_text: str, lang_code: str) -> None:
-    """Triggers high-priority alerts for personal safety / assault emergencies."""
-    print("\n🚨 [ALERT: DISTRESS / ASSAULT DETECTED] 🚨")
-    print(f"Transcript: '{detected_text}'")
-    print("Action: Sending coordinates to dispatch & sounding local alert.")
-
-    alert_msg = (
-        "Emergency alert triggered. Dispatching local security and authorities."
-    )
-    if lang_code != "en":
-        alert_msg = gnani_dynamic_translate(
-            alert_msg, source_lang="en", target_lang=lang_code
-        )
-    print(f"Bot Output: {alert_msg}")
-    gnani_tts(alert_msg, lang_code=lang_code)
-
-
-def match_first_aid(text: str) -> str | None:
-    """Matches keywords in input to predefined first-aid guidance protocols."""
-    lowered = text.lower()
-    for _, details in FIRST_AID_GUIDANCE.items():
-        for kw in details["keywords"]:
-            if kw in lowered:
-                return details["guidance"]
     return None
 
+def detect_intent(text):
+    """Detects emergency category from multilingual or code-mixed text."""
+    if not text:
+        return []
+    text_lower = text.lower()
+    matched = []
+    for key, service in EMERGENCY_SERVICES.items():
+        if any(kw.lower() in text_lower for kw in service["keywords"]):
+            matched.append(service)
+    return matched
 
-def process_emergency_input(transcript: str, detected_lang: str = "hi"):
-    """Main routing engine for speech transcription."""
-    print(f"\n[Transcribed Input ({detected_lang})]: {transcript}")
+# ==========================================
+# MAIN APPLICATION UI
+# ==========================================
+st.markdown("""
+<div class="app-header">
+    <h1>🚨 Indic Voice Emergency Response</h1>
+    <p>Multilingual & Code-Mixed AI Voice Assistant (11 Languages)</p>
+</div>
+""", unsafe_allow_html=True)
 
-    # Check for assault/distress keywords
-    if any(k in transcript.lower() for k in DISTRESS_KEYWORDS):
-        trigger_distress_alarm(transcript, detected_lang)
-        return
+# 1. Language Selection
+selected_lang_name = st.selectbox(
+    "🌐 Select Your Language / ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ / अपनी भाषा चुनें",
+    options=list(LANGUAGES.keys()),
+    index=0
+)
+current_lang_code = LANGUAGES[selected_lang_name]["code"]
 
-    # Check for predefined first-aid match
-    guidance_en = match_first_aid(transcript)
-    if guidance_en:
-        print("\n[Protocol Matched: First-Aid Guidance Found]")
-        final_response = (
-            guidance_en
-            if detected_lang == "en"
-            else gnani_dynamic_translate(
-                guidance_en, source_lang="en", target_lang=detected_lang
-            )
-        )
+st.write("### 🎙️ Speak Your Emergency")
+st.caption("Speak naturally (supports pure regional languages as well as Kanglish, Hinglish, Tanglish, etc.)")
+
+# 2. Browser Microphone Recorder (Cloud-Safe)
+audio_data = mic_recorder(
+    start_prompt="🔴 Tap to Speak Emergency",
+    stop_prompt="⏹️ Stop Recording",
+    just_once=False,
+    use_container_width=True,
+    format="wav",
+    key="emergency_recorder"
+)
+
+# 3. Text / Manual Input Fallback for Testing
+manual_query = st.text_input(
+    "⌨️ Or type your emergency (e.g., 'Need ambulance jaldi', 'ಪೊಲೀಸ್ ಸಹಾಯ ಬೇಕು'):",
+    placeholder="Type here if microphone is unavailable..."
+)
+
+# Process Voice or Text Input
+active_transcript = ""
+
+if audio_data and "bytes" in audio_data:
+    st.audio(audio_data["bytes"], format="audio/wav")
+    with st.spinner("Processing voice input..."):
+        transcript_result = transcribe_audio(audio_data["bytes"], current_lang_code)
+        if transcript_result:
+            active_transcript = transcript_result
+        else:
+            st.info("💡 Voice recorded! (Add your `GNANI_TOKEN` and `GNANI_ACCESS_KEY` in Streamlit Secrets for live ASR, or test intent routing using the text box above.)")
+
+if manual_query:
+    active_transcript = manual_query
+
+# Display Detected Intent & Actionable Response
+if active_transcript:
+    st.markdown(f"""
+    <div class="status-box">
+        <strong>🗣️ Recognized Input ({LANGUAGES[selected_lang_name]['label']}):</strong><br>
+        "{active_transcript}"
+    </div>
+    """, unsafe_allow_html=True)
+
+    matched_services = detect_intent(active_transcript)
+
+    st.write("### ⚡ Immediate Action Recommended")
+    if matched_services:
+        for service in matched_services:
+            st.markdown(f"""
+            <div class="emergency-card" style="border-color: #ff5252; background-color: #2b1d1d;">
+                <div class="card-title">{service['title']}</div>
+                <div class="card-number">📞 Dial: <a href="tel:{service['number'].split()[0]}" style="color: #ff5252; text-decoration: underline;">{service['number']}</a></div>
+                <div style="font-size: 0.9rem; color: #cfd8dc; margin-top: 0.4rem;">{service['desc']}</div>
+            </div>
+            """, unsafe_allow_html=True)
     else:
-        # Fallback to dynamic real-time conversational translation
-        print("\n[Protocol Fallback: Conversational Field Translation]")
-        translated_to_en = gnani_dynamic_translate(
-            transcript, source_lang=detected_lang, target_lang="en"
-        )
-        print(f"Field Worker English View: {translated_to_en}")
-        final_response = (
-            "Emergency reported. Help has been contacted. Stay where you are."
-        )
-        if detected_lang != "en":
-            final_response = gnani_dynamic_translate(
-                final_response, source_lang="en", target_lang=detected_lang
-            )
+        st.warning("General Emergency Detected — Routing to National Emergency Number (112)")
+        st.markdown("""
+        <div class="emergency-card" style="border-color: #ffa726;">
+            <div class="card-title">🚨 National Emergency Response System (ERSS)</div>
+            <div class="card-number">📞 Dial: <a href="tel:112" style="color: #ffa726; text-decoration: underline;">112</a></div>
+            <div style="font-size: 0.9rem; color: #cfd8dc; margin-top: 0.4rem;">All-in-one emergency dispatch for Police, Fire, and Ambulance.</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    print(f"Spoken Guidance: {final_response}")
-    gnani_tts(final_response, lang_code=detected_lang)
+st.divider()
 
+# ==========================================
+# QUICK-DIAL EMERGENCY DIRECTORY GRID
+# ==========================================
+st.write("### 📋 Quick-Dial Emergency Directory")
+col1, col2 = st.columns(2)
 
-# ==============================================================================
-# RUNTIME ENTRY POINT
-# ==============================================================================
-if __name__ == "__main__":
-    print("=" * 60)
-    print("   MULTILINGUAL EMERGENCY VOICE BOT INITIALIZED")
-    print("=" * 60)
-
-    # Set chosen primary language (e.g., 'hi', 'kn', 'ta', 'te', etc.)
-    active_lang = "hi"
-
-    # Step 1: Record 5 seconds of emergency audio
-    recorded_audio_bytes = record_audio(duration=5)
-
-    # Step 2: Transcribe using Gnani ASR
-    recognized_text = gnani_stt(recorded_audio_bytes, lang_code=active_lang)
-
-    # Step 3: Route through emergency reasoning engine
-    if recognized_text:
-        process_emergency_input(recognized_text, detected_lang=active_lang)
-    else:
-        print(
-            "No clear audio input captured or API credentials need validation."
-        )
+services_list = list(EMERGENCY_SERVICES.values())
+for idx, srv in enumerate(services_list):
+    target_col = col1 if idx % 2 == 0 else col2
+    with target_col:
+        st.markdown(f"""
+        <div class="emergency-card">
+            <div class="card-title">{srv['title']}</div>
+            <div class="card-number"><a href="tel:{srv['number'].split()[0]}" style="color: #ff5252; text-decoration: none;">📞 {srv['number']}</a></div>
+            <div style="font-size: 0.85rem; color: #b0bec5; margin-top: 0.3rem;">{srv['desc']}</div>
+        </div>
+        """, unsafe_allow_html=True)
