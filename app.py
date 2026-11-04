@@ -4,9 +4,6 @@ import os
 import requests
 import streamlit as st
 from streamlit_mic_recorder import mic_recorder
-==========================================
-PAGE CONFIGURATION
-==========================================
 st.set_page_config(
 page_title="Sahaya Emergency Assistant",
 page_icon="🚨",
