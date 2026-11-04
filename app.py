@@ -21,22 +21,25 @@ st.markdown("""
         text-align: center;
         color: white;
         margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
     .emergency-card {
         background-color: #1e293b;
         border: 1px solid #334155;
-        border-left: 5px solid #dc2626;
+        border-left: 6px solid #dc2626;
         border-radius: 8px;
-        padding: 1rem;
+        padding: 1.2rem;
         margin-bottom: 1rem;
         color: #f8fafc;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .step-box {
         background-color: #0f172a;
         border: 1px solid #334155;
         border-radius: 6px;
-        padding: 0.75rem;
-        margin-top: 0.5rem;
+        padding: 0.8rem;
+        margin-top: 0.6rem;
+        color: #cbd5e1;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -61,35 +64,35 @@ EMERGENCY_DIRECTORY = [
         "number": "108",
         "keywords": ["ambulance", "hospital", "doctor", "accident", "heart", "injury", "medical", "bleeding", "unconscious", "ಆಂಬ್ಯುಲೆನ್ಸ್", "ಆಸ್ಪತ್ರೆ", "ಅಪಘಾತ", "एम्बुलेंस", "अस्पताल", "चोट"],
         "desc": "Immediate dispatch for medical crises, severe injuries, or emergency transport.",
-        "first_aid": "1. Check airway and breathing. 2. Apply firm direct pressure to any bleeding wound. 3. Keep the person warm and still until 108 arrives."
+        "first_aid": "1. Check airway, breathing, and pulse.\n2. Apply firm, direct pressure to any heavy bleeding wound.\n3. Keep the person warm, calm, and still until 108 medical personnel arrive."
     },
     {
         "title": "Police & Safety Emergency",
         "number": "112",
         "keywords": ["police", "attack", "crime", "theft", "danger", "fight", "robbery", "help", "ಪೊಲೀಸ್", "ಸಹಾಯ", "पुलिस", "बचाओ"],
         "desc": "Immediate assistance for crime, personal safety threats, or law enforcement.",
-        "first_aid": "1. Move to a well-lit, secure location immediately. 2. Stay on the line with the 112 operator and share your live landmarks."
+        "first_aid": "1. Move quickly to a secure, well-lit, or populated public space.\n2. Stay on the line with the 112 emergency dispatcher and provide exact landmarks."
+    },
+    {
+        "title": "Assault, Harassment & Distress (Women/Men)",
+        "number": "1091",
+        "keywords": ["assault", "harassment", "abuse", "stalking", "distress", "threat", "molestation", "women", "men", "daim", "ದೌರ್ಜನ್ಯ", "ಕಿರುಕುಳ", "उत्पीड़न", "छेड़छाड़"],
+        "desc": "Dedicated protection and rapid response for any form of assault, harassment, or severe personal distress.",
+        "first_aid": "1. Seek immediate shelter in a safe shop, office, or trusted group of people.\n2. Call 1091 or 112 right away.\n3. Do not confront the perpetrator alone if you are in immediate danger."
     },
     {
         "title": "Fire & Rescue Services",
         "number": "101",
         "keywords": ["fire", "burn", "smoke", "cylinder", "blast", "rescue", "ಬೆಂಕಿ", "आग"],
-        "desc": "Emergency response for fires, gas leaks, burns, or entrapment.",
-        "first_aid": "1. Evacuate immediately and stay low under smoke. 2. For burns, run cool (not ice-cold) water over the area for 10-15 minutes."
-    },
-    {
-        "title": "Women Helpline",
-        "number": "1091",
-        "keywords": ["women", "harassment", "abuse", "safety", "stalking", "ಮಹಿಳಾ", "महिला"],
-        "desc": "Dedicated 24/7 support and rapid protection for women in distress.",
-        "first_aid": "1. Reach a crowded or secure public area if possible. 2. Dial 1091 or 112 immediately and alert nearby trusted individuals."
+        "desc": "Emergency response for fires, gas leaks, burns, or structural entrapment.",
+        "first_aid": "1. Evacuate the premises immediately and stay low to the ground to avoid thick smoke.\n2. For minor burns, run cool (not cold/iced) running water over the affected area for 10-15 minutes."
     },
     {
         "title": "Disaster & Flood Relief",
         "number": "1078",
         "keywords": ["flood", "earthquake", "cyclone", "landslide", "disaster", "ಭೂಕಂಪ", "ಪ್ರವಾಹ", "बाढ़"],
-        "desc": "Support during natural calamities and severe weather emergencies.",
-        "first_aid": "1. Turn off main electrical switches and gas valves. 2. Move to higher ground and avoid touching wet electrical poles."
+        "desc": "Support during natural calamities, floods, earthquakes, and severe weather.",
+        "first_aid": "1. Switch off main electrical power breakers and gas lines if safe to do so.\n2. Move to higher ground instantly and stay clear of downed power lines."
     }
 ]
 
@@ -123,7 +126,7 @@ def process_audio_transcription(audio_bytes, lang_code):
         "kn_IN": "ತುರ್ತು ಪರಿಸ್ಥಿತಿ! ತಕ್ಷಣ ಆಂಬ್ಯುಲೆನ್ಸ್ ಬೇಕು, ಅಪಘಾತವಾಗಿದೆ.",
         "hi_IN": "इमरजेंसी! तुरंत एम्बुलेंस चाहिए, एक्सीडेंट हुआ है।",
     }
-    return fallback_samples.get(lang_code, "Emergency! Need an ambulance and medical first aid immediately.")
+    return fallback_samples.get(lang_code, "Emergency! Need immediate medical and safety assistance.")
 
 def match_emergency(transcript_text):
     if not transcript_text:
@@ -150,18 +153,18 @@ selected_lang_label = st.selectbox(
 lang_code = [k for k, v in LANGUAGES.items() if v == selected_lang_label][0]
 
 st.subheader("🎙️ Speak Your Emergency")
-st.caption("Speak naturally in Kannada, Hindi, English, or any supported Indic language.")
+st.caption("Speak naturally in any supported Indic language or English.")
 
 audio_info = mic_recorder(
     start_prompt="🔴 Tap to Speak Emergency",
     stop_prompt="⏹️ Stop Recording",
     just_once=True,
-    key="mic_recorder"
+    key="mic_recorder_v2"
 )
 
 st.subheader("⌨️ Or Type Your Emergency")
 manual_text = st.text_input(
-    "Type here if microphone is unavailable (e.g., 'Need ambulance jaldi', 'ಅಪಘಾತವಾಗಿದೆ ಆಂಬ್ಯುಲೆನ್ಸ್ ಬೇಕು'):"
+    "Type here (e.g., 'Need help with harassment', 'ಅಪಘಾತವಾಗಿದೆ ಆಂಬ್ಯುಲೆನ್ಸ್ ಬೇಕು'):"
 )
 
 final_transcript = ""
@@ -174,7 +177,7 @@ elif audio_info and "bytes" in audio_info:
         final_transcript = process_audio_transcription(audio_info["bytes"], lang_code)
 
 if final_transcript:
-    st.success(f"🗣️ **Detected Emergency:** {final_transcript}")
+    st.success(f"🗣️ **Detected Input:** {final_transcript}")
     matched_services = match_emergency(final_transcript)
     if not matched_services:
         matched_services = [EMERGENCY_DIRECTORY[0]]
@@ -186,12 +189,12 @@ if final_transcript:
             <h3>🚨 {service['title']}</h3>
             <p>{service['desc']}</p>
             <div class="step-box">
-                <strong>🩹 First-Aid Instructions:</strong><br>
-                {service['first_aid']}
+                <strong>🩹 Emergency First-Aid Guidelines:</strong><br>
+                <pre style="white-space: pre-wrap; font-family: inherit; margin:0; color:#cbd5e1;">{service['first_aid']}</pre>
             </div>
             <br>
             <a href="tel:{service['number']}" style="text-decoration:none;">
-                <button style="background-color:#dc2626; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%;">
+                <button style="background-color:#dc2626; color:white; border:none; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%;">
                     📞 Call {service['number']} Now
                 </button>
             </a>
@@ -199,7 +202,7 @@ if final_transcript:
         """, unsafe_allow_html=True)
 
 st.divider()
-st.subheader("📋 Quick EmergencyHelpline Directory")
+st.subheader("📋 Quick Emergency Helpline Directory")
 for srv in EMERGENCY_DIRECTORY:
     st.markdown(f"""
     <div style="background:#1e293b; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #334155; display:flex; justify-content:space-between; align-items:center;">
