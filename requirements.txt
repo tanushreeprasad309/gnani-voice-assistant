@@ -3,4 +3,3 @@ streamlit-mic-recorder
 requests
 scipy
 numpy
-sounddevice
